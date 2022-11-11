@@ -1,0 +1,114 @@
+{
+  "name": "acwing",
+  "displayName": "acwing",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.73.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:acwing.helloWorld",
+    "onView:acWing"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ac-problem-explorer",
+          "title": "AcWing",
+          "icon": "media/dep.svg"
+        }
+      ]
+    },
+    "views": {
+      "ac-problem-explorer": [
+        {
+          "id": "acWing",
+          "name": "AcWing",
+          "icon": "media/dep.svg",
+          "contextualTitle": "AcWing"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "acWing.refreshEntry",
+        "title": "Refresh",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "acWing.addEntry",
+        "title": "Add"
+      },
+      {
+        "command": "acWing.editEntry",
+        "title": "Edit",
+        "icon": {
+          "light": "resources/light/edit.svg",
+          "dark": "resources/dark/edit.svg"
+        }
+      },
+      {
+        "command": "acWing.deleteEntry",
+        "title": "Delete"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "acWing.refreshEntry",
+          "when": "view == acWing",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "acWing.editEntry",
+          "when": "view == acWing && viewItem == dependency",
+          "group": "inline"
+        },
+        {
+          "command": "acWing.deleteEntry",
+          "when": "view == acWing && viewItem == dependency"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "16.x",
+    "@types/node-fetch": "^2.6.2",
+    "@types/vscode": "^1.73.0",
+    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@typescript-eslint/parser": "^5.42.0",
+    "@vscode/test-electron": "^2.2.0",
+    "eslint": "^8.26.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "@types/request-promise": "^4.1.48",
+    "axios": "^1.1.3",
+    "cheerio": "^1.0.0-rc.12",
+    "node-fetch": "^2.6.1",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6"
+  }
+}
