@@ -17,6 +17,8 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.window.registerTreeDataProvider('acWing', problemTreeProvider);
 	vscode.commands.registerCommand('acWing.refreshEntry', () => problemTreeProvider.refresh());
 	vscode.commands.registerCommand("acWing.previewProblem", async (id: string) => problemPreviewView.show(id, false, context.extensionPath));
+	vscode.commands.registerCommand("acWing.showProblem", (async (id: string) => problemPreviewView.showProblem(id, context.extensionPath)));
+
 }
 
 // This method is called when your extension is deactivated

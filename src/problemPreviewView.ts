@@ -1,5 +1,6 @@
 import { commands, ConfigurationChangeEvent, Disposable, ViewColumn, WebviewPanel, window, workspace, Uri } from "vscode";
 import * as path from "path";
+import * as fse from "fs-extra";
 import { acwingManager } from "./repo/acwingManager";
 import { ProblemContent } from "./repo/ProblemContent";
 
@@ -73,6 +74,31 @@ class ProblemPreviewView implements Disposable {
         this.sideMode = isSideMode;
         this.extensionPath = extensionPath;
         this.showWebviewInternal();
+    }
+
+    public async showProblem(problemID: string, extensionPath: string): Promise<void> {
+        let problemContent = await acwingManager.getProblemContentById(problemID);
+
+        if (!problemContent) {
+            console.error('getProblemContentById() failed ' + problemID);
+            return;
+        }
+
+        const language = 'cpp';
+        const fileFolder: string = extensionPath
+        const fileName: string = problemContent.name.trim() + '.cpp';
+        let finalPath: string = path.join(fileFolder, fileName);
+
+        if (!await fse.pathExists(finalPath)) {
+            await fse.createFile(finalPath);
+
+            let content: string = "";
+            if (problemContent.codeTemplate) {
+                content = problemContent.codeTemplate['C++'] || "";
+            }
+            await fse.writeFile(finalPath, content);
+        }
+        window.showTextDocument(Uri.file(finalPath), { preview: false, viewColumn: ViewColumn.One });
     }
 
 
@@ -200,7 +226,7 @@ class ProblemPreviewView implements Disposable {
     protected async onDidReceiveMessage(message: IWebViewMessage): Promise<void> {
         switch (message.command) {
             case "ShowProblem": {
-                await commands.executeCommand("leetcode.showProblem", this.problemID);
+                await commands.executeCommand("acWing.showProblem", this.problemID);
                 break;
             }
         }
