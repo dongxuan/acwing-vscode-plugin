@@ -11,6 +11,7 @@
   ],
   "activationEvents": [
     "onCommand:acwing.helloWorld",
+    "onCommand:leetcode.previewProblem",
     "onView:acWing"
   ],
   "main": "./out/extension.js",

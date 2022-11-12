@@ -3,6 +3,7 @@
 
 import { Disposable } from "vscode";
 import { Problem } from './Problem'
+import { ProblemContent } from './ProblemContent';
 import fetch, { Headers } from 'node-fetch';
 import * as cheerio from 'cheerio';
 
@@ -15,6 +16,7 @@ const HEADERS = {
 
 class AcwingManager implements Disposable {
   private explorerProblemsMap: Map<string, Problem> = new Map<string, Problem>();
+  private problemContentMap: Map<string, ProblemContent> = new Map<string, ProblemContent>();
 
   public async refreshCache(): Promise<void> {
     this.dispose();
@@ -32,8 +34,19 @@ class AcwingManager implements Disposable {
     return this.explorerProblemsMap.get(id);
   }
 
+  public async getProblemContentById(id: string): Promise<ProblemContent | undefined> {
+    let item: ProblemContent | undefined = this.problemContentMap.get(id);
+    if (item) {
+      return item;
+    }
+    item  = await this.fetchProblemContent(id);
+    return item;
+  }
+
+
   public dispose(): void {
     this.explorerProblemsMap.clear();
+    this.problemContentMap.clear();
   }
 
   // 列出acwing 页面的问题 https://www.acwing.com/problem/{page}/
@@ -81,6 +94,92 @@ class AcwingManager implements Disposable {
     });
     return nodes;
   }
+
+  // 获取问题的内容
+  public async fetchProblemContent (id: string): Promise<ProblemContent| undefined> {
+    console.log('getProblemContent() ' + id);
+
+    try {
+      let config = {
+        method: 'get',
+        headers: HEADERS
+      }
+
+      const response = await fetch(`https://www.acwing.com/problem/content/description/${id}/`, config);
+      // if (!response.ok) {
+      //   throw new Error(`Error! status: ${response.status}`);
+      // }
+      const html = await response.text();
+      // console.log('result is: ', html);
+      let item = this.parseProblemContent(id, html);
+      if (item && item.name) {
+        this.problemContentMap.set(id, item);
+      }
+      return item;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('error message: ', error.message);
+      } else {
+        console.error('unexpected error: ', error);
+      }
+    }
+    return Promise.resolve(undefined);
+  }
+
+  private parseProblemContent(id: string, html: string): ProblemContent | undefined {
+    if (!html) return undefined;
+
+    let item = new ProblemContent(id);
+    const $ = cheerio.load(html);
+    item.name = $('.problem-content-title').text().replace(/\n/g, '').trim();
+    item.contentHtml = $('.main-martor-content').html() || "";
+    $('.table-responsive tbody tr').each(function (index, value) {
+      let vd: string[] = [];
+      switch (index) {
+        case 0:
+          // 难度
+          item.difficulty = $('td span', this).text().trim();
+          break;
+        case 1:
+          // 时空限制
+          item.limit = $('td span', this).text().trim();
+          break;
+        case 2:
+          // 通过
+          item.accepted = $('td span', this).text().trim();
+          break;
+        case 3:
+          // 未通过
+          item.submissions = $('td span', this).text().trim();
+          break;
+        case 4:
+          // 来源
+          item.source = $('td span', this).text().trim();
+          break;
+        case 5:
+          // 标签
+          item.tags = [];
+          let str = $('td', this).html() || "";
+          let i = str.indexOf('keywords = "');
+          let i2 = str.indexOf('".replace');
+          if (i > 0 && i2 > 0 && i2 > i) {
+            str = str.substring(i + 'keywords = "'.length, i2);
+            if (str) {
+              item.tags = str.split(',');
+            }
+          }
+          break;
+        default:
+          console.log('parseProblemContent() error.');
+      }
+    });
+
+    // 解析代码模板
+
+    // TODO 如何解析其他类型语言的代码模板
+    console.log('parseProblemContent() ' + id, item);
+    return item;
+  } 
 }
 
 export const acwingManager: AcwingManager = new AcwingManager();

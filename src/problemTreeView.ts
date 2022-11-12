@@ -2,11 +2,12 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { acwingManager } from "./repo/acwingManager";
+import { Problem } from './repo/Problem'
 
-export class ProblemTreeProvider implements vscode.TreeDataProvider<ProblemNode> {
+export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 
-	private _onDidChangeTreeData: vscode.EventEmitter<ProblemNode | undefined | void> = new vscode.EventEmitter<ProblemNode | undefined | void>();
-	readonly onDidChangeTreeData: vscode.Event<ProblemNode | undefined | void> = this._onDidChangeTreeData.event;
+	private _onDidChangeTreeData: vscode.EventEmitter<Problem | undefined | void> = new vscode.EventEmitter<Problem | undefined | void>();
+	readonly onDidChangeTreeData: vscode.Event<Problem | undefined | void> = this._onDidChangeTreeData.event;
 
 	constructor() {
 	}
@@ -16,26 +17,23 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<ProblemNode>
 		this._onDidChangeTreeData.fire();
 	}
 
-	getTreeItem(element: ProblemNode): vscode.TreeItem {
-		return element;
+	getTreeItem(element: Problem): vscode.TreeItem {
+		let problemNode = new ProblemNode(
+			`${element.id}. ${element.name}`,
+			element.difficulty, element.id, element.state, vscode.TreeItemCollapsibleState.None);
+		return problemNode;
 	}
 
-	async getChildren(element?: ProblemNode): Promise<ProblemNode[]> {
+	async getChildren(element?: Problem): Promise<Problem[]> {
 		// if (!this.workspaceRoot) {
 		// 	vscode.window.showInformationMessage('No dependency in empty workspace');
 		// 	return Promise.resolve([]);
 		// }
-		let problemNodes: ProblemNode[] = [];
 
+		let problemNodes: Problem[] = [];
 		if (!element) {
 			// vscode.window.showInformationMessage('Loading problems ...');
-			const nodes = await acwingManager.listProblems(1);
-			nodes.forEach(node => {
-				let problemNode = new ProblemNode(
-					`${node.id}. ${node.name}`,
-					node.difficulty, node.id, node.state, vscode.TreeItemCollapsibleState.None);
-				problemNodes.push(problemNode);
-			})
+			problemNodes = await acwingManager.listProblems(1);
 		}
 		return problemNodes;
 	}
@@ -64,12 +62,11 @@ export class ProblemNode extends vscode.TreeItem {
 			// 其他状态
 			this.iconPath =  path.join(__filename, '..', '..', 'resources', 'blank.png');
 		}
+		this.command = {
+            title: "Preview Problem",
+            command: "acWing.previewProblem",
+            arguments: [this.problemID],
+        }
 	}
-
-	// iconPath = {
-	// 	light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
-	// 	dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
-	// };
-
 	contextValue = 'dependency';
 }
