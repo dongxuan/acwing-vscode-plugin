@@ -15,7 +15,7 @@ export class ProblemContent {
     private _source: string = "";
     private _tags: string[] = [];
     private _contentHtml: string = "";
-    private _codeTemplate: string = "";
+    private _codeTemplate: object | undefined = undefined;
 
     constructor(id: string) { 
         this.id = id;
@@ -48,12 +48,6 @@ export class ProblemContent {
     public set name(value: string) {
         this._name = value;
     }
-    public get codeTemplate(): string {
-        return this._codeTemplate;
-    }
-    public set codeTemplate(value: string) {
-        this._codeTemplate = value;
-    }
 
     public get contentHtml(): string {
         return this._contentHtml;
@@ -79,5 +73,12 @@ export class ProblemContent {
     }
     public set submissions(value: string) {
         this._submissions = value;
+    }
+
+    public get codeTemplate(): object | undefined {
+        return this._codeTemplate;
+    }
+    public set codeTemplate(value: object | undefined) {
+        this._codeTemplate = value;
     }
 }

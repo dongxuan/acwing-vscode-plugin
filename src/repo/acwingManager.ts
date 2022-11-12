@@ -175,11 +175,40 @@ class AcwingManager implements Disposable {
     });
 
     // 解析代码模板
-
-    // TODO 如何解析其他类型语言的代码模板
+    let codeToolHtml: string = $('#code_tool_bar').html() || "";
+    item.codeTemplate = this.parseCodeTemplate(codeToolHtml);
     console.log('parseProblemContent() ' + id, item);
     return item;
-  } 
+  }
+
+  private parseCodeTemplate(codeToolHtml: string): object | undefined {
+    if (!codeToolHtml) {
+      return undefined;
+    }
+
+    const keyword = 'let problem_code_show_mappings = '
+    let i1 = codeToolHtml.indexOf(keyword);
+    if (i1 < 0) {
+      return undefined;
+    }
+    let i2 = codeToolHtml.indexOf('</script>', i1 + keyword.length);
+    if (i2 < 0) {
+      return undefined;
+    }
+    try {
+      let data = codeToolHtml.substring(i1 + keyword.length, i2);
+      console.log('codeToolTemplate 1111 => ', data);
+
+      let i3 = data.lastIndexOf("}");
+      data = data.substring(0, i3 + 1);
+      console.log('codeToolTemplate html => ', data);
+      var obj = (0, eval)('(' + data + ')');
+      return obj;
+    } catch(e) {
+      console.error(e);
+    }
+    return undefined;
+  }
 }
 
 export const acwingManager: AcwingManager = new AcwingManager();
