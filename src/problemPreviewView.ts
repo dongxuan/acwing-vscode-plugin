@@ -76,6 +76,7 @@ class ProblemPreviewView implements Disposable {
         this.showWebviewInternal();
     }
 
+    // 显示问题
     public async showProblem(problemID: string, extensionPath: string): Promise<void> {
         let problemContent = await acwingManager.getProblemContentById(problemID);
 
@@ -96,7 +97,22 @@ class ProblemPreviewView implements Disposable {
             if (problemContent.codeTemplate) {
                 content = problemContent.codeTemplate['C++'] || "";
             }
-            await fse.writeFile(finalPath, content);
+
+            // 写入标题
+            const header = 
+`/*
+* @acwing app=acwing.cn id=${problemID} lang=${language}
+*
+* [${problemID}] ${problemContent.name}
+*/
+
+// @acwing code start
+
+`;
+
+            const end = `
+// @acwing code end`;
+            await fse.writeFile(finalPath, header + content + end);
         }
         window.showTextDocument(Uri.file(finalPath), { preview: false, viewColumn: ViewColumn.One });
     }

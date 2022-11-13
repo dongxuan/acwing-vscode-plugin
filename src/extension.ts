@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { problemPreviewView } from './problemPreviewView';
 import { ProblemTreeProvider, ProblemNode } from './problemTreeView';
 import { acwingManager } from './repo/acwingManager';
+import { codeLensController } from "./CodeLensController";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -19,7 +20,9 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand("acWing.previewProblem", async (id: string) => problemPreviewView.show(id, false, context.extensionPath));
 	vscode.commands.registerCommand("acWing.showProblem", (async (id: string) => problemPreviewView.showProblem(id, context.extensionPath)));
 
+	context.subscriptions.push(codeLensController);
 }
+
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
