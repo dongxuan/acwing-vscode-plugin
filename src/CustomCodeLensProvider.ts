@@ -22,7 +22,7 @@ export class CustomCodeLensProvider implements vscode.CodeLensProvider {
         if (!matchResult) {
             return undefined;
         }
-        const nodeId: string | undefined = matchResult[1];
+        const problemID: string | undefined = matchResult[1];
    
         let codeLensLine: number = document.lineCount - 1;
         for (let i: number = document.lineCount - 1; i >= 0; i--) {
@@ -40,25 +40,25 @@ export class CustomCodeLensProvider implements vscode.CodeLensProvider {
         codeLens.push(new vscode.CodeLens(range, {
             title: "题目预览",
             command: "acWing.previewProblem",
-            arguments: [document.uri],
+            arguments: [problemID],
         }));
 
         codeLens.push(new vscode.CodeLens(range, {
             title: "题目解答",
             command: "acWing.showSolution",
-            arguments: [document.uri],
+            arguments: [problemID],
         }));
 
         codeLens.push(new vscode.CodeLens(range, {
             title: "调试代码",
             command: "acWing.testSolution",
-            arguments: [document.uri],
+            arguments: [problemID, document.uri],
         }));
         
         codeLens.push(new vscode.CodeLens(range, {
             title: "提交答案",
             command: "acWing.submitSolution",
-            arguments: [document.uri],
+            arguments: [problemID, document.uri],
         }));
 
         return codeLens;

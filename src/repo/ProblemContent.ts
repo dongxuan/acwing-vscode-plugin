@@ -16,6 +16,7 @@ export class ProblemContent {
     private _tags: string[] = [];
     private _contentHtml: string = "";
     private _codeTemplate: object | undefined = undefined;
+    private _codeStdin: string = "";
 
     constructor(id: string) { 
         this.id = id;
@@ -78,7 +79,16 @@ export class ProblemContent {
     public get codeTemplate(): object | undefined {
         return this._codeTemplate;
     }
+    
     public set codeTemplate(value: object | undefined) {
         this._codeTemplate = value;
+    }
+
+    public get codeStdin(): string {
+        return this._codeStdin;
+    }
+
+    public set codeStdin(value: string) {
+        this._codeStdin = value;
     }
 }
