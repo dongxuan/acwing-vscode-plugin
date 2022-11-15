@@ -17,12 +17,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 	acwingManager.createAcWingSocket();
 
-
-
 	const problemTreeProvider = new ProblemTreeProvider();
-	vscode.window.registerTreeDataProvider('acWing', problemTreeProvider);
+	let acWingTreeView = vscode.window.createTreeView("acWing", {treeDataProvider: problemTreeProvider});
+	acWingTreeView.title = "1";
+	problemTreeProvider.setTreeView(acWingTreeView);
+	context.subscriptions.push(acWingTreeView);
+
 	vscode.commands.registerCommand('acWing.refreshEntry', () => problemTreeProvider.refresh());
-	
+	vscode.commands.registerCommand('acWing.prevPage', () => problemTreeProvider.prevPage());
+	vscode.commands.registerCommand('acWing.nextPage', () => problemTreeProvider.nextPage());
+	vscode.commands.registerCommand('acWing.gotoPage', () => problemTreeProvider.gotoPage());
+
 	vscode.commands.registerCommand("acWing.previewProblem", async (id: string) => problemPreviewView.show(id, false, context.extensionPath));
 	vscode.commands.registerCommand("acWing.showProblem", (async (id: string) => problemPreviewView.showProblem(id, context.extensionPath)));
 
