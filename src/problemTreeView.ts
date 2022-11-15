@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as _ from "lodash";
 import * as path from 'path';
 import { acwingManager } from "./repo/acwingManager";
-import { Problem } from './repo/Problem'
+import { Problem, ProblemState } from './repo/Problem'
 
 export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 
@@ -95,12 +95,26 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 	}
 
 	getTreeItem(element: Problem): vscode.TreeItem {
-		let problemNode = new ProblemNode(
-			`${element.index}. ${element.name}`,
-			element.difficulty, element.id, element.state, vscode.TreeItemCollapsibleState.None);
-
-		problemNode.resourceUri = element.uri;
-		return problemNode;
+		let iconPath: string = "";
+   		if (element.state == ProblemState.ACCEPTED) {
+			iconPath =  path.join(__filename, '..', '..', 'resources', 'check.png');
+		} else if (element.state == ProblemState.TRY) {
+			iconPath = path.join(__filename, '..', '..', 'resources', 'x.png');
+		} else {
+			iconPath =  path.join(__filename, '..', '..', 'resources', 'blank.png');
+		}
+		return {
+			label: `${element.index}. ${element.name}`,
+			tooltip: `${element.difficulty}, 通过率 ${element.passRate}`,
+			iconPath: iconPath,
+			resourceUri: element.uri,
+			collapsibleState: vscode.TreeItemCollapsibleState.None,
+			command: {
+				title: "Preview Problem",
+				command: "acWing.previewProblem",
+				arguments: [element.id, element],
+			}
+		};
 	}
 
 	async getChildren(element?: Problem): Promise<Problem[]> {
@@ -118,36 +132,4 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 		}
 		return [];
 	}
-}
-
-export class ProblemNode extends vscode.TreeItem {
-
-	constructor(
-		public readonly label: string,
-		private readonly level: string,
-        public readonly problemID: string,
-		public readonly state: number,
-		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-		public readonly command?: vscode.Command,
-	) {
-		super(label, collapsibleState);
-		// this.tooltip = `${this.problemID} - ${this.label}-${this.level}`;
-
-		if (state == 1) {
-			// 解决
-			this.iconPath =  path.join(__filename, '..', '..', 'resources', 'check.png');
-		} else if (state == 2) {
-			// 未解决
-			this.iconPath =  path.join(__filename, '..', '..', 'resources', 'x.png');
-		} else {
-			// 其他状态
-			this.iconPath =  path.join(__filename, '..', '..', 'resources', 'blank.png');
-		}
-		this.command = {
-            title: "Preview Problem",
-            command: "acWing.previewProblem",
-            arguments: [this.problemID],
-        }
-	}
-	contextValue = 'dependency';
 }

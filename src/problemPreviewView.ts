@@ -1,18 +1,33 @@
+import * as vscode from 'vscode';
 import { commands, ConfigurationChangeEvent, Disposable, ViewColumn, WebviewPanel, window, workspace, Uri } from "vscode";
 import * as path from "path";
 import * as fse from "fs-extra";
 import { acwingManager } from "./repo/acwingManager";
+import { Problem } from "./repo/Problem";
 import { ProblemContent } from "./repo/ProblemContent";
 
 
 class ProblemPreviewView implements Disposable {
 
     private problemID: string = "";
+    private problem: Problem | undefined;
     private problemContent: ProblemContent | undefined;
     private sideMode: boolean = false;
     protected panel: WebviewPanel | undefined;
     private listeners: Disposable[] = [];
+    private mContext: vscode.ExtensionContext | undefined;
     private extensionPath: string = "";
+
+    public show(problemID: string, problem: Problem, isSideMode: boolean): void {
+        this.problemID = problemID;
+        this.problem = problem;
+        this.sideMode = isSideMode;
+        this.showWebviewInternal();
+    }
+
+    public isSideMode(): boolean {
+        return this.sideMode;
+    }
 
     public dispose(): void {
         if (this.panel) {
@@ -20,8 +35,17 @@ class ProblemPreviewView implements Disposable {
         }
     }
 
-    protected async showWebviewInternal(): Promise<void> {
-        const title = 'Title'; 
+    public setContext(context: vscode.ExtensionContext) {
+        this.mContext = context;
+        this.extensionPath = this.mContext.extensionPath;
+    }
+
+    private async showWebviewInternal(): Promise<void> {
+        let title = 'AcWing';
+        if (this.problem) {
+            title = `${this.problem.index}. ${this.problem.name}`;
+        }
+
         const viewColumn = this.sideMode ? ViewColumn.Two: ViewColumn.One;
         const preserveFocus = this.sideMode;
 
@@ -50,7 +74,7 @@ class ProblemPreviewView implements Disposable {
         this.panel.webview.html = await this.getWebviewContent();
     }
 
-    protected onDidDisposeWebview(): void {
+    private onDidDisposeWebview(): void {
         this.panel = undefined;
         for (const listener of this.listeners) {
             listener.dispose();
@@ -59,79 +83,30 @@ class ProblemPreviewView implements Disposable {
         this.sideMode = false;
     }
 
-    protected async onDidChangeConfiguration(event: ConfigurationChangeEvent): Promise<void> {
+    private async onDidChangeConfiguration(event: ConfigurationChangeEvent): Promise<void> {
         if (this.panel && event.affectsConfiguration("markdown")) {
             this.panel.webview.html = await this.getWebviewContent();
         }
     }
 
-    public isSideMode(): boolean {
-        return this.sideMode;
-    }
-
-    public show(problemID: string, isSideMode: boolean, extensionPath: string): void {
-        this.problemID = problemID;
-        this.sideMode = isSideMode;
-        this.extensionPath = extensionPath;
-        this.showWebviewInternal();
-    }
-
-    // 显示问题
-    public async showProblem(problemID: string, extensionPath: string): Promise<void> {
-        let problemContent = await acwingManager.getProblemContentById(problemID);
-
-        if (!problemContent) {
-            console.error('getProblemContentById() failed ' + problemID);
-            return;
-        }
-
-        const language = 'cpp';
-        const fileFolder: string = extensionPath
-        const fileName: string = problemContent.name.trim() + '.cpp';
-        let finalPath: string = path.join(fileFolder, fileName);
-
-        if (!await fse.pathExists(finalPath)) {
-            await fse.createFile(finalPath);
-
-            let content: string = "";
-            if (problemContent.codeTemplate) {
-                content = problemContent.codeTemplate['C++'] || "";
-            }
-
-            // 写入标题
-            const header = 
-`/*
-* @acwing app=acwing.cn id=${problemID} lang=${language}
-*
-* [${problemID}] ${problemContent.name}
-*/
-
-// @acwing code start
-
-`;
-
-            const end = `
-// @acwing code end`;
-            await fse.writeFile(finalPath, header + content + end);
-        }
-        window.showTextDocument(Uri.file(finalPath), { preview: false, viewColumn: ViewColumn.One });
-    }
-
-
     private async getWebviewContent(): Promise<string> {
         this.problemContent = await acwingManager.getProblemContentById(this.problemID);
         if (!this.problemContent) {
-            // 渲染失败页面
+            // TODO 渲染失败页面
             return this.getWebviewFailedContent();
         }
 
         // Get path to resource on disk
-        const onDiskPath = Uri.file(
-            path.join(this.extensionPath, 'media', 'ac.css')
+        const onDiskPath1 = Uri.file(
+            path.join(this.extensionPath, 'media', 'acwing.css')
+        );
+        const onDiskPath2 = Uri.file(
+            path.join(this.extensionPath, 'media', 'primer.css')
         );
 
         // And get the special URI to use with the webview
-        const cssfile = this.panel?.webview.asWebviewUri(onDiskPath);
+        const cssfile1 = this.panel?.webview.asWebviewUri(onDiskPath1);
+        const cssfile2 = this.panel?.webview.asWebviewUri(onDiskPath2);
 
         const button: { element: string, script: string, style: string } = {
             element: `<button id="solve">Code Now</button>`,
@@ -159,56 +134,44 @@ class ProblemPreviewView implements Disposable {
                 </style>`,
         };
 
-        const head: string = `<h2>${this.problemContent.name}</h2>`;
-        // const info: string = markdownEngine.render([
-        //     `| Category | Difficulty | Likes | Dislikes |`,
-        //     `| :------: | :--------: | :---: | :------: |`,
-        //     `| ${category} | ${difficulty} | ${likes} | ${dislikes} |`,
-        // ].join("\n"));
+        const titlte = `<div class="Subhead">
+                <h2 class="Subhead-heading">
+                    ${this.problemContent.name}
+                </h2></div>`;
 
-        // const tags: string = [
-        //     `<details>`,
-        //     `<summary><strong>Tags</strong></summary>`,
-        //     markdownEngine.render(
-        //         this.description.tags
-        //             .map((t: string) => `[\`${t}\`](https://leetcode.com/tag/${t})`)
-        //             .join(" | "),
-        //     ),
-        //     `</details>`,
-        // ].join("\n");
+        const links = this.getHtmlLinkArea(); 
+        const table = this.getHtmlTable();
+        const tags = this.getHtmlTags();  
 
-        // const companies: string = [
-        //     `<details>`,
-        //     `<summary><strong>Companies</strong></summary>`,
-        //     markdownEngine.render(
-        //         this.description.companies
-        //             .map((c: string) => `\`${c}\``)
-        //             .join(" | "),
-        //     ),
-        //     `</details>`,
-        // ].join("\n");
-
-        // const links: string = markdownEngine.render(`[Discussion](${this.getDiscussionLink(url)}) | [Solution](${this.getSolutionLink(url)})`);
-        
         const body: string = this.problemContent.contentHtml;
         this.panel?.webview.cspSource
+
+        // TODO 样式问题
+        // Light	data-color-mode="light" data-light-theme="light"
+        // Dark	data-color-mode="dark" data-dark-theme="dark"
+        // Dark Dimmed	data-color-mode="dark" data-dark-theme="dark_dimmed"
+        // Dark High Contrast	data-color-mode="dark" data-dark-theme="dark_high_contrast"
+        // <html data-color-mode="dark" data-dark-theme="dark_dimmed">
         return `
             <!DOCTYPE html>
-            <html>
+            <html data-color-mode="dark" data-dark-theme="dark_dimmed">
             <head>
                 <meta http-equiv="Content-Security-Policy"
                 content = "default-src https://cdn.acwing.com 'unsafe-inline' 'none' ; 
-                img-src ${ this.panel?.webview.cspSource } https:; 
+                img-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com  https:; 
                 script-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com 'unsafe-inline'; 
                 style-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com 'unsafe-inline';"/>
                 ${!this.sideMode ? button.style : ""}
                 <title>${ this.problemContent.name }</title>
-                <link rel="stylesheet" href="${cssfile}">
+                <link rel="stylesheet" href="${cssfile1}">
+                <link rel="stylesheet" href="${cssfile2}">
             </head>
-            <body>
-                ${head}
+            <body style="padding-bottom: 22px;">
+                ${titlte}
+                ${links}
+                ${table}
+                ${tags}
                 ${body}
-                <hr />
                 ${!this.sideMode ? button.element : ""}
                 <script>
                     const vscode = acquireVsCodeApi();
@@ -235,14 +198,89 @@ class ProblemPreviewView implements Disposable {
         return "";
     }
 
+    // 获取HTML的跳转区域
+    private getHtmlLinkArea ():string {
+        let html = "<div>";
+        const data = [
+            { title : '原题链接', url: this.getSourceLink() },
+            { title : '题目讨论', url: this.getDiscussionLink() },
+            { title : '题解答案', url: this.getSolutionLink() },
+            { title : '视频讲解', url: this.getSolutionVideoLink() },
+        ]
+
+        for (let item of data) {
+            html += `
+            <a href="${item.url}" class="link-mktg arrow-target-mktg text-semibold f4-mktg">
+            ${item.title}
+            <svg xmlns="http://www.w3.org/2000/svg" class="octicon arrow-symbol-mktg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path fill="currentColor" d="M7.28033 3.21967C6.98744 2.92678 6.51256 2.92678 6.21967 3.21967C5.92678 3.51256 5.92678 3.98744 6.21967 4.28033L7.28033 3.21967ZM11 8L11.5303 8.53033C11.8232 8.23744 11.8232 7.76256 11.5303 7.46967L11 8ZM6.21967 11.7197C5.92678 12.0126 5.92678 12.4874 6.21967 12.7803C6.51256 13.0732 6.98744 13.0732 7.28033 12.7803L6.21967 11.7197ZM6.21967 4.28033L10.4697 8.53033L11.5303 7.46967L7.28033 3.21967L6.21967 4.28033ZM10.4697 7.46967L6.21967 11.7197L7.28033 12.7803L11.5303 8.53033L10.4697 7.46967Z"></path>
+                <path stroke="currentColor" d="M1.75 8H11" stroke-width="1.5" stroke-linecap="round"></path>
+            </svg>
+            </a>
+            `
+        }
+        html += '</div>';
+        return html;
+    }
+
+    // 算法标签
+    private getHtmlTags () {
+        let tags = this.problemContent?.tags;
+        if (!tags || tags.length == 0) return '';
+
+        let html = `<details class="details-reset mt-3" style="margin-bottom: 18px;">
+                    <summary class="btn-link f4-mktg">
+                        算法标签<span class="dropdown-caret">
+                    </summary>
+                    <div style="margin-top: 8px;">`;
+        for (let item of tags) {
+            html += `<span class="Label mr-1 Label--accent">${item}</span>`;
+        }
+
+        html += '</div></details>';
+        return html;
+    }
+
+    // 获取table HTML
+    private getHtmlTable () {
+        let html = `<div class="markdown-body" style="margin-top: 12px; margin-bottom: 12px;">
+        <table><thead><tr>
+        <th>难度</th>
+        <th>时/空限制</th>
+        <th>总通过数</th>
+        <th>总尝试数</th>
+        <th>来源</th>
+        </tr>
+        </thead><tbody><tr>
+        `;
+
+        const bg = {
+            '简单': 'color-bg-success-emphasis',
+            '中等': 'color-bg-attention-emphasis',
+            '困难': 'color-bg-danger-emphasis',
+        }
+        
+        html += `<td>
+            <span class="IssueLabel IssueLabel--big color-fg-on-emphasis mr-1 
+                ${bg[this.problemContent?.difficulty || '简单']}">
+                ${this.problemContent?.difficulty}
+            </span></td>`
+        html += `<td>${this.problemContent?.limit}</td>`;
+        html += `<td>${this.problemContent?.accepted}</td>`;
+        html += `<td>${this.problemContent?.submissions}</td>`;
+        html += `<td>${this.problemContent?.source}</td>`;
+        html += '</tr></tbody></table></div>';
+        return html;
+    }
+
     private getWebviewFailedContent () : string {
         return "failed."
     }
 
-    protected async onDidReceiveMessage(message: IWebViewMessage): Promise<void> {
+    private async onDidReceiveMessage(message: IWebViewMessage): Promise<void> {
         switch (message.command) {
             case "ShowProblem": {
-                await commands.executeCommand("acWing.showProblem", this.problemID);
+                await commands.executeCommand("editProblem", this.problemID);
                 break;
             }
         }
@@ -253,34 +291,7 @@ class ProblemPreviewView implements Disposable {
     //     await commands.executeCommand("workbench.action.toggleSidebarVisibility");
     // }
 
-    private parseDescription(descString: string, problemID: string): IDescription | null {
-        // const [
-        //     /* title */, ,
-        //     url, ,
-        //     /* tags */, ,
-        //     /* langs */, ,
-        //     category,
-        //     difficulty,
-        //     likes,
-        //     dislikes,
-        //     /* accepted */,
-        //     /* submissions */,
-        //     /* testcase */, ,
-        //     ...body
-        // ] = descString.split("\n");
-        // return {
-        //     title: problem.name,
-        //     url,
-        //     tags: problem.tags,
-        //     companies: problem.companies,
-        //     category: category.slice(2),
-        //     difficulty: difficulty.slice(2),
-        //     likes: likes.split(": ")[1].trim(),
-        //     dislikes: dislikes.split(": ")[1].trim(),
-        //     body: body.join("\n").replace(/<pre>[\r\n]*([^]+?)[\r\n]*<\/pre>/g, "<pre><code>$1</code></pre>"),
-        // };
-        return null;
-    }
+
 
     // 原题链接
     private getSourceLink(): string {
@@ -308,17 +319,6 @@ class ProblemPreviewView implements Disposable {
     }
 }
 
-interface IDescription {
-    title: string;
-    url: string;
-    tags: string[];
-    companies: string[];
-    category: string;
-    difficulty: string;
-    likes: string;
-    dislikes: string;
-    body: string;
-}
 
 interface IWebViewMessage {
     command: string;

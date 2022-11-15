@@ -1,27 +1,75 @@
-import { ConfigurationChangeEvent, Disposable, languages, workspace, FileSystemProvider } from "vscode";
-import * as vscode from 'vscode';
-import { customCodeLensProvider, CustomCodeLensProvider } from "./CustomCodeLensProvider";
-import { problemPreviewView } from './problemPreviewView';
 import * as fs from "fs";
-import { acwingManager } from "./repo/acwingManager";
+import * as vscode from 'vscode';
 import * as WebSocket from 'ws';
+import * as path from "path";
+import * as fse from "fs-extra";
 
-class AcWingController implements Disposable {
-    outputChannel : vscode.OutputChannel = vscode.window.createOutputChannel("AcWing");
+import { ConfigurationChangeEvent, Disposable, languages, workspace, FileSystemProvider, ExtensionContext } from "vscode";
+import { customCodeLensProvider, CustomCodeLensProvider } from "./CustomCodeLensProvider";
+import { acwingManager } from "./repo/acwingManager";
+import { problemPreviewView } from './problemPreviewView';
+import { ProblemTreeProvider } from './problemTreeView';
+import { Problem } from "./repo/Problem";
+
+export class AcWingController implements Disposable {
     static readonly ACWIGN_STATUS_NAMES = {"Uploading":"Uploading","Pending":"Pending","Judging":"Judging","Running":"Running","Too many tasks":"Too many tasks","Upload Failed":"Upload Failed","Input Limit Exceeded":"Input Limit Exceeded","COMPILE_ERROR":"Compile Error","WRONG_ANSWER":"Wrong Answer","TIME_LIMIT_EXCEEDED":"Time Limit Exceeded","MEMORY_LIMIT_EXCEEDED":"Memory Limit Exceeded","OUTPUT_LIMIT_EXCEEDED":"Output Limit Exceeded","RUNTIME_ERROR":"Runtime Error","SEGMENTATION_FAULT":"Segmentation Fault","PRESENTATION_ERROR":"Presentation Error","INTERNAL_ERROR":"Internal Error","FLOAT_POINT_EXCEPTION":"Float Point Exception","NON_ZERO_EXIT_CODE":"Non Zero Exit Code","ACCEPTED":"Accepted","FINISHED":"Finished"};
     static readonly ACWIGN_STATUS_COLORS = {"Uploading":"#9d9d9d","Pending":"#9d9d9d","Judging":"#337ab7","Running":"#337ab7","Too many tasks":"#d05451","Upload Failed":"#d05451","Input Limit Exceeded":"#d05451","Compile Error":"#d05451","Wrong Answer":"#d05451","Time Limit Exceeded":"#d05451","Memory Limit Exceeded":"#d05451","Output Limit Exceeded":"#d05451","Runtime Error":"#d05451","Segmentation Fault":"#d05451","Presentation Error":"#d05451","Internal Error":"#d05451","Float Point Exception":"#d05451","Non Zero Exit Code":"#d05451","Accepted":"#449d44","Finished":"#449d44"};
     
-    constructor() {
+    private outputChannel : vscode.OutputChannel = vscode.window.createOutputChannel("AcWing");
+    private mContext: vscode.ExtensionContext;
 
+    constructor(context: vscode.ExtensionContext) {
+        this.mContext = context;
+        problemPreviewView.setContext(this.mContext);
     }
 
-    public refreshEntry () {
-        console.log('AcWingController::refreshEntry()');
-    }
-
-    public previewProblem (problemID: string) {
+    // 预览题目
+    public previewProblem (problemID: string, problem: Problem) {
         console.log('AcWingController::previewProblem() ' + problemID);
+        problemPreviewView.show(problemID, problem, false);
+    }
 
+    // 显示编辑器
+    public async showProblem (problemID: string) {
+        let problemContent = await acwingManager.getProblemContentById(problemID);
+
+        if (!problemContent) {
+            console.error('getProblemContentById() failed ' + problemID);
+            return;
+        }
+
+        const language = 'cpp';
+        const fileFolder: string = this.mContext.globalStorageUri.fsPath;
+        const fileName: string = problemContent.name.trim() + '.cpp';
+        let finalPath: string = path.join(fileFolder, fileName);
+
+        if (!await fse.pathExists(finalPath)) {
+            await fse.createFile(finalPath);
+
+            let content: string = "";
+            if (problemContent.codeTemplate) {
+                content = problemContent.codeTemplate['C++'] || "";
+            }
+
+            // 写入标题
+            const header = 
+`/*
+* @acwing app=acwing.cn id=${problemID} lang=${language}
+*
+* [${problemID}] ${problemContent.name}
+*/
+
+// @acwing code start
+
+`;
+
+            const end = `
+// @acwing code end`;
+            await fse.writeFile(finalPath, header + content + end);
+        }
+        vscode.window.showTextDocument(
+            vscode.Uri.file(finalPath), 
+            { preview: false, viewColumn: vscode.ViewColumn.One });
     }
 
     // 显示题解
@@ -194,5 +242,3 @@ class AcWingController implements Disposable {
         this.outputChannel.dispose();
     }
 }
-
-export const acWingController: AcWingController = new AcWingController();

@@ -2,11 +2,12 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { problemPreviewView } from './problemPreviewView';
-import { ProblemTreeProvider, ProblemNode } from './problemTreeView';
+import { ProblemTreeProvider } from './problemTreeView';
 import { acwingManager } from './repo/acwingManager';
 import { codeLensController } from "./CodeLensController";
-import { acWingController } from "./AcWingController";
+import { AcWingController } from "./AcWingController";
 import { acWingTreeItemDecorationProvider } from "./AcWingTreeItemDecorationProvider";
+import { Problem } from './repo/Problem';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -15,7 +16,6 @@ export function activate(context: vscode.ExtensionContext) {
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "acwing" is now active!');
-
 	vscode.window.registerFileDecorationProvider(acWingTreeItemDecorationProvider);
 
 	acwingManager.createAcWingSocket();
@@ -26,13 +26,20 @@ export function activate(context: vscode.ExtensionContext) {
 	problemTreeProvider.setTreeView(acWingTreeView);
 	context.subscriptions.push(acWingTreeView);
 
+	const acWingController = new AcWingController(context);
+
 	vscode.commands.registerCommand('acWing.refreshEntry', () => problemTreeProvider.refresh());
 	vscode.commands.registerCommand('acWing.prevPage', () => problemTreeProvider.prevPage());
 	vscode.commands.registerCommand('acWing.nextPage', () => problemTreeProvider.nextPage());
 	vscode.commands.registerCommand('acWing.gotoPage', () => problemTreeProvider.gotoPage());
 
-	vscode.commands.registerCommand("acWing.previewProblem", async (id: string) => problemPreviewView.show(id, false, context.extensionPath));
-	vscode.commands.registerCommand("acWing.showProblem", (async (id: string) => problemPreviewView.showProblem(id, context.extensionPath)));
+	// 预览题目
+	vscode.commands.registerCommand("acWing.previewProblem",
+		async (id: string, problem: Problem) => acWingController.previewProblem(id, problem));
+
+	// 编辑题目	
+	vscode.commands.registerCommand("acWing.editProblem", 
+		async (id: string) => acWingController.showProblem(id));
 
 	// 原题链接
 	vscode.commands.registerCommand("acWing.showSource", 

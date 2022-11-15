@@ -12,7 +12,7 @@
   "activationEvents": [
     "onCommand:acwing.gotoPage",
     "onCommand:acwing.previewProblem",
-    "onCommand:acwing.showProblem",
+    "onCommand:acwing.editProblem",
     "onView:acWing"
   ],
   "main": "./out/extension.js",
