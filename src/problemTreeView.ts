@@ -96,8 +96,10 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 
 	getTreeItem(element: Problem): vscode.TreeItem {
 		let problemNode = new ProblemNode(
-			`${element.id}. ${element.name}`,
+			`${element.index}. ${element.name}`,
 			element.difficulty, element.id, element.state, vscode.TreeItemCollapsibleState.None);
+
+		problemNode.resourceUri = element.uri;
 		return problemNode;
 	}
 
@@ -129,7 +131,7 @@ export class ProblemNode extends vscode.TreeItem {
 		public readonly command?: vscode.Command,
 	) {
 		super(label, collapsibleState);
-		this.tooltip = `${this.problemID} - ${this.label}-${this.level}`;
+		// this.tooltip = `${this.problemID} - ${this.label}-${this.level}`;
 
 		if (state == 1) {
 			// 解决

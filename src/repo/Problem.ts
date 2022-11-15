@@ -63,8 +63,17 @@ export class Problem {
     public get index(): string {
         return this._index;
     }
-    
+
     public set index(value: string) {
         this._index = value;
+    }
+
+    public get uri(): Uri {
+        return Uri.from({
+            scheme: "acwing",
+            authority: "problems",
+            path: `/${this.id}`,
+            query: `difficulty=${this.difficulty}`,
+        });
     }
 }
