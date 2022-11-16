@@ -1,27 +1,34 @@
 // Copyright (c) jdneo. All rights reserved.
 // Licensed under the MIT license.
 
-import { Disposable } from "vscode";
+import { Disposable, workspace, ConfigurationChangeEvent } from "vscode";
 import { Problem, ProblemState } from './Problem'
 import { ProblemContent } from './ProblemContent';
 import fetch, { Headers } from 'node-fetch';
 import * as cheerio from 'cheerio';
 import * as WebSocket from 'ws';
 
-const COOKIE = 'aliyungf_tc=e5fce49a08e658ac929effce9bbf42c5d9f01a512ecaf1c39d33e9df323860b4; file_6712727_readed=""; file_4813_readed=""; file_566732_readed=""; file_4796_readed=""; file_52601_readed=""; file_52587_readed=""; file_5036_readed=""; file_4814_readed=""; file_63971_readed=""; file_5560006_readed=""; file_7222675_readed=""; csrftoken=t08fEOGvrwSgU7Uo2BzS4oWGc1IR6CinLCbKe3fRNuerZDw8bfB41rzIbRLADT9c; sessionid=ab3xpwtltbhr4kirxacqwr6de4aqww2c; file_589_readed=""';
-const HEADERS = {
-  'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
-  'Cookie': COOKIE
-}
+// const COOKIE = 'aliyungf_tc=e5fce49a08e658ac929effce9bbf42c5d9f01a512ecaf1c39d33e9df323860b4; file_6712727_readed=""; file_4813_readed=""; file_566732_readed=""; file_4796_readed=""; file_52601_readed=""; file_52587_readed=""; file_5036_readed=""; file_4814_readed=""; file_63971_readed=""; file_5560006_readed=""; file_7222675_readed=""; csrftoken=t08fEOGvrwSgU7Uo2BzS4oWGc1IR6CinLCbKe3fRNuerZDw8bfB41rzIbRLADT9c; sessionid=ab3xpwtltbhr4kirxacqwr6de4aqww2c; file_589_readed=""';
 
 class AcwingManager implements Disposable {
   private explorerProblemsMap: Map<number, Problem[]> = new Map<number, Problem[]>();
   private problemContentMap: Map<string, ProblemContent> = new Map<string, ProblemContent>();
   private maxPage = 0;
+  private acWingCookie: string = "";
+  private configurationChangeListener: Disposable;
+
+  constructor() {
+    this.acWingCookie = workspace.getConfiguration().get<string>("acWing.cookies", '');
+    this.configurationChangeListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+        if (event.affectsConfiguration("acWing.cookies")) {
+            this.acWingCookie = workspace.getConfiguration().get<string>("acWing.cookies", '');
+        }
+    }, this);
+  }
 
   public async refreshCache(): Promise<void> {
-    this.dispose();
+    this.explorerProblemsMap.clear();
+    this.problemContentMap.clear();
   }
 
   public async getProblemsByPage(page: number, force: boolean = false): Promise<Problem[] | undefined> {
@@ -45,18 +52,17 @@ class AcwingManager implements Disposable {
   }
 
   public isLogin (): boolean {
-    // TODO
-    return true;
+    return !!this.acWingCookie;
   }
 
   public getCookie (): string {
-    // TODO
-    return COOKIE;
+    return this.acWingCookie;
   }
 
   public dispose(): void {
     this.explorerProblemsMap.clear();
     this.problemContentMap.clear();
+    this.configurationChangeListener.dispose();
   }
 
   // 列出acwing 页面的问题 https://www.acwing.com/problem/{page}/
@@ -66,7 +72,11 @@ class AcwingManager implements Disposable {
     try {
       let config = {
         method: 'get',
-        headers: HEADERS
+        headers: {
+          'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
+          'Cookie': this.acWingCookie
+        }
       }
       const response = await fetch(`https://www.acwing.com/problem/${page}/`, config);
       const html = await response.text();
@@ -145,7 +155,11 @@ class AcwingManager implements Disposable {
     try {
       let config = {
         method: 'get',
-        headers: HEADERS
+        headers: {
+          'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
+          'Cookie': this.acWingCookie
+        }
       }
 
       const response = await fetch(`https://www.acwing.com/problem/content/description/${id}/`, config);

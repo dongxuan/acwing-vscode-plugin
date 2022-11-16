@@ -18,6 +18,10 @@ export class AcWingTreeItemDecorationProvider implements FileDecorationProvider 
         if (uri.scheme !== "acwing" && uri.authority !== "problems") {
             return;
         }
+        const configuration: WorkspaceConfiguration = workspace.getConfiguration();
+        if (!configuration.get<boolean>("acWing.colorizeProblems", false)) {
+            return;
+        }
         const params: URLSearchParams = new URLSearchParams(uri.query);
         const difficulty: string = params.get("difficulty")!.toLowerCase();
         return {

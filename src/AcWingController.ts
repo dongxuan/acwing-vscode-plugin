@@ -53,12 +53,16 @@ export class AcWingController implements Disposable {
             console.error('getProblemContentById() failed ' + problemID);
             return;
         }
-        // TODO 获取默认的语言
-        const language = 'C++';
+        // 获取默认的语言
+        const language = workspace.getConfiguration().get<string>("acWing.defaultLanguage", 'C++');
 
-        // TODO 默认文件地址
-        const fileFolder: string = this.mContext.globalStorageUri.fsPath;
-        const fileName: string = problemContent.name.trim() + '.' + AcWingController.LANG_SUFFIX_MAP[language];
+        // 文件地址
+        let fileFolder = workspace.getConfiguration().get<string>("acWing.workspaceFolder", '');
+        if (!fileFolder) {
+            fileFolder = this.mContext.globalStorageUri.fsPath;
+        }
+        const fileName: string = problemContent.name.trim() + '.' 
+            + AcWingController.LANG_SUFFIX_MAP[language];
         let finalPath: string = path.join(fileFolder, fileName);
 
         // create file
@@ -79,7 +83,7 @@ export class AcWingController implements Disposable {
     // 显示原题链接
     public showSource (problemID: string) {
         console.log('AcWingController::showSource() ' + problemID);
-        const url = `https://www.acwing.com/problem/${problemID}`;
+        const url = `https://www.acwing.com/problem/content/${problemID}/`;
         vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
 

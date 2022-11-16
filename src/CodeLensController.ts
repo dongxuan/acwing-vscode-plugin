@@ -10,7 +10,7 @@ class CodeLensController implements Disposable {
         this.internalProvider = customCodeLensProvider;
 
         this.configurationChangeListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-            if (event.affectsConfiguration("leetcode.editor.shortcuts")) {
+            if (event.affectsConfiguration("acWing.editor.shortcuts")) {
                 this.internalProvider.refresh();
             }
         }, this);

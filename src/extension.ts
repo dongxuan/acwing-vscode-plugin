@@ -61,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 		(async (id: string) => acWingController.showSubmitRecord(id)));	
 
 	// 测试代码	
-	vscode.commands.registerCommand("acWing.testSolution", 
+	vscode.commands.registerCommand("acWing.runSolution", 
 		(async (problemID: string, uri: vscode.Uri, lang: string) => acWingController.runSolution(problemID, uri, lang)));
 
 	// 提交代码
