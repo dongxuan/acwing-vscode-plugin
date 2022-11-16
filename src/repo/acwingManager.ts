@@ -18,10 +18,6 @@ const HEADERS = {
 class AcwingManager implements Disposable {
   private explorerProblemsMap: Map<number, Problem[]> = new Map<number, Problem[]>();
   private problemContentMap: Map<string, ProblemContent> = new Map<string, ProblemContent>();
-  
-  private acWingSocket: WebSocket | undefined;
-  private acWingSocketReady: boolean = false; 
-  private acWingHeartbeatIntervalID: NodeJS.Timer | undefined;
   private maxPage = 0;
 
   public async refreshCache(): Promise<void> {
@@ -48,6 +44,15 @@ class AcwingManager implements Disposable {
     return this.maxPage;
   }
 
+  public isLogin (): boolean {
+    // TODO
+    return true;
+  }
+
+  public getCookie (): string {
+    // TODO
+    return COOKIE;
+  }
 
   public dispose(): void {
     this.explorerProblemsMap.clear();
@@ -248,112 +253,6 @@ class AcwingManager implements Disposable {
       console.error(e);
     }
     return undefined;
-  }
-
-  public createAcWingSocket () {
-    console.log('createAcWingSocket()');
-    if (this.acWingSocket) {
-      this.acWingSocket.close();
-    }
-
-    this.onCloseAcWingSocket();
-  
-    this.acWingSocket = new WebSocket("wss://www.acwing.com/wss/socket/", {
-      headers: HEADERS
-    });
-
-    // set listener
-    const that = this;
-    this.acWingSocket.on('open', function open() {
-      console.log('open socket.')
-    });
-
-    this.acWingSocket.on('message', function message(data) {
-      console.log('received: %s', data);
-      let ev = JSON.parse(data.toString());
-
-      if ("socket" === ev.activity && ev.state== "ready") {
-        // set socket ready Flag
-        that.acWingSocketReady = true;
-        console.log('acWingSocket ready.');
-
-        // 心跳包维持
-        that.acWingHeartbeatIntervalID = setInterval(function() {
-          that.acWingSocket?.send({ activity: "heartbeat"})
-        }, 3e4);
-      }
-    });
-  
-    this.acWingSocket.on('error', function message(data) {
-      console.log('error: %s', data);
-    });
-  
-    this.acWingSocket.on('close', function message(data) {
-      console.log('close: %s', data);
-      that.onCloseAcWingSocket();
-    });
-  }
-
-  private onCloseAcWingSocket() {
-    console.log('onCloseAcWingSocket()');
-
-    this.acWingSocketReady = false;
-    if (this.acWingHeartbeatIntervalID) {
-      clearInterval(this.acWingHeartbeatIntervalID);
-      this.acWingHeartbeatIntervalID = undefined;
-    }
-  }
-
-  private sendAcWingSocket(data: string): boolean {
-    console.log('sendAcWingSocket() ' + data);
-
-    if (!this.acWingSocketReady) {
-      this.createAcWingSocket();
-
-      const that = this;
-      setTimeout(function() {
-        that.acWingSocket?.send(data);
-      }, 3000);
-      return false;
-    } else {
-      this.acWingSocket?.send(data);
-      return true;
-    }
-  }
-
-  public addSocketEventListener (cb: (event: WebSocket.MessageEvent) => void) {
-    return this.acWingSocket?.addEventListener("message", cb);
-  }
-
-  public removeSocketEventListener (cb: (event: WebSocket.MessageEvent) => void) {
-    return this.acWingSocket?.removeEventListener("message", cb);
-  }
-
-  public runCode (problemID: string, code:string, input: string, lang: string): boolean {
-    let data = {
-      'activity': "problem_run_code",
-      'problem_id': parseInt(problemID),
-      'code': code,
-      'language': lang,
-      'input': input,
-    };
-    console.log('runCode()', data);
-    return this.sendAcWingSocket(JSON.stringify(data));
-  }
-
-  public submitCode (problemID: string, code:string, lang: string) {
-    const data = {
-      'activity': "problem_submit_code",
-      'problem_id': problemID,
-      'code': code,
-      'language': lang,
-      'mode': 'normal',
-      'problem_activity_id': 0,
-      'record': [],
-      'program_time': 0,
-    }
-    console.log('submitCode()', data);
-    return this.sendAcWingSocket(JSON.stringify(data));
   }
 }
 

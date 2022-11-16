@@ -289,8 +289,6 @@ class ProblemPreviewView implements Disposable {
                 </script>
             </body>
         </html>
-        
-        
         `
         return html;
     }
@@ -298,7 +296,7 @@ class ProblemPreviewView implements Disposable {
     private async onDidReceiveMessage(message: IWebViewMessage): Promise<void> {
         switch (message.command) {
             case "editProblem": {
-                await commands.executeCommand("editProblem", this.problemID);
+                await commands.executeCommand("acWing.editProblem", this.problemID);
                 break;    
             }
             case "reloadProblem": {

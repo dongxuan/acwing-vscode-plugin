@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import * as WebSocket from 'ws';
 import * as path from "path";
 import * as fse from "fs-extra";
+import * as chalk from 'chalk';
 
 import { ConfigurationChangeEvent, Disposable, languages, workspace, FileSystemProvider, ExtensionContext } from "vscode";
 import { customCodeLensProvider, CustomCodeLensProvider } from "./CustomCodeLensProvider";
@@ -10,11 +11,26 @@ import { acwingManager } from "./repo/acwingManager";
 import { problemPreviewView } from './problemPreviewView';
 import { ProblemTreeProvider } from './problemTreeView';
 import { Problem } from "./repo/Problem";
+import { ProblemContent } from "./repo/ProblemContent";
 
 export class AcWingController implements Disposable {
     static readonly ACWIGN_STATUS_NAMES = {"Uploading":"Uploading","Pending":"Pending","Judging":"Judging","Running":"Running","Too many tasks":"Too many tasks","Upload Failed":"Upload Failed","Input Limit Exceeded":"Input Limit Exceeded","COMPILE_ERROR":"Compile Error","WRONG_ANSWER":"Wrong Answer","TIME_LIMIT_EXCEEDED":"Time Limit Exceeded","MEMORY_LIMIT_EXCEEDED":"Memory Limit Exceeded","OUTPUT_LIMIT_EXCEEDED":"Output Limit Exceeded","RUNTIME_ERROR":"Runtime Error","SEGMENTATION_FAULT":"Segmentation Fault","PRESENTATION_ERROR":"Presentation Error","INTERNAL_ERROR":"Internal Error","FLOAT_POINT_EXCEPTION":"Float Point Exception","NON_ZERO_EXIT_CODE":"Non Zero Exit Code","ACCEPTED":"Accepted","FINISHED":"Finished"};
     static readonly ACWIGN_STATUS_COLORS = {"Uploading":"#9d9d9d","Pending":"#9d9d9d","Judging":"#337ab7","Running":"#337ab7","Too many tasks":"#d05451","Upload Failed":"#d05451","Input Limit Exceeded":"#d05451","Compile Error":"#d05451","Wrong Answer":"#d05451","Time Limit Exceeded":"#d05451","Memory Limit Exceeded":"#d05451","Output Limit Exceeded":"#d05451","Runtime Error":"#d05451","Segmentation Fault":"#d05451","Presentation Error":"#d05451","Internal Error":"#d05451","Float Point Exception":"#d05451","Non Zero Exit Code":"#d05451","Accepted":"#449d44","Finished":"#449d44"};
-    
+    static readonly LANG_SUFFIX_MAP = {
+        'C++': 'cpp',
+        'C': 'c',
+        'Java': 'java', 
+        'Python': 'py',
+        'Javascript': 'js',
+        'Python3': 'py',
+        'Go': 'go',
+    }
+
+    private webSocket: WebSocket | undefined;
+    private isWebSocketReady: boolean = false; 
+    private heartbeatIntervalID: NodeJS.Timer | undefined;
+    private codeStdin: string = "";
+
     private outputChannel : vscode.OutputChannel = vscode.window.createOutputChannel("AcWing");
     private mContext: vscode.ExtensionContext;
 
@@ -30,45 +46,26 @@ export class AcWingController implements Disposable {
     }
 
     // 显示编辑器
-    public async showProblem (problemID: string) {
+    public async editProblem (problemID: string) {
         let problemContent = await acwingManager.getProblemContentById(problemID);
 
         if (!problemContent) {
             console.error('getProblemContentById() failed ' + problemID);
             return;
         }
+        // TODO 获取默认的语言
+        const language = 'C++';
 
-        const language = 'cpp';
+        // TODO 默认文件地址
         const fileFolder: string = this.mContext.globalStorageUri.fsPath;
-        const fileName: string = problemContent.name.trim() + '.cpp';
+        const fileName: string = problemContent.name.trim() + '.' + AcWingController.LANG_SUFFIX_MAP[language];
         let finalPath: string = path.join(fileFolder, fileName);
 
-        if (!await fse.pathExists(finalPath)) {
-            await fse.createFile(finalPath);
-
-            let content: string = "";
-            if (problemContent.codeTemplate) {
-                content = problemContent.codeTemplate['C++'] || "";
-            }
-
-            // 写入标题
-            const header = 
-`/*
-* @acwing app=acwing.cn id=${problemID} lang=${language}
-*
-* [${problemID}] ${problemContent.name}
-*/
-
-// @acwing code start
-
-`;
-
-            const end = `
-// @acwing code end`;
-            await fse.writeFile(finalPath, header + content + end);
-        }
-        vscode.window.showTextDocument(
-            vscode.Uri.file(finalPath), 
+        // create file
+        this.createProblemCode(problemID, problemContent, finalPath, language);
+    
+        // TODO 显示几行
+        vscode.window.showTextDocument(vscode.Uri.file(finalPath), 
             { preview: false, viewColumn: vscode.ViewColumn.One });
     }
 
@@ -107,49 +104,199 @@ export class AcWingController implements Disposable {
         vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
 
-    // 测试代码
-    public async testSolution (problemID: string, uri: vscode.Uri) {
-        console.log('AcWingController::testSolution()', problemID, uri);
-        const data = await fs.readFileSync(uri.fsPath, "utf8");
+    // 创建文件
+    public async createProblemCode (problemID: string, problemContent: ProblemContent, 
+        finalPath: string, lang: string) {
 
-        const that = this;
-        let cb = (event: WebSocket.MessageEvent):void => {
-            let ev = JSON.parse(event.data.toString());
-    
-            if (ev.activity === 'problem_run_code_status') {
-                that.onRunCodeStatus(ev);
-            } else if (ev.activity === 'problem_submit_code_status') {
-                that.onSubmitCodeStatus(ev);
-            }
+        if (await fse.pathExists(finalPath)) {
+            console.log(`createProblemCode() ${finalPath} skip.`);
+            return;
+        }
+        console.log(`createProblemCode() create ${finalPath} `);
+        await fse.createFile(finalPath);
+
+        let content: string = "";
+        if (problemContent.codeTemplate) {
+            content = problemContent.codeTemplate[lang] || "";
         }
 
-        acwingManager.addSocketEventListener(cb);
+        // 写入标题
+        const header = 
+`/*
+* @acwing app=acwing.cn id=${problemID} lang=${lang}
+*
+* ${problemContent.name}
+*/
+
+// @acwing code start
+
+`;
+
+        const end = `
+// @acwing code end`;
+        await fse.writeFile(finalPath, header + content + end);
+    }
+
+    // 运行代码
+    public async runSolution (problemID: string, uri: vscode.Uri, lang: string) {
+        console.log('AcWingController::runSolution()', problemID, uri);
+
+        if (!lang || !AcWingController.LANG_SUFFIX_MAP[lang]) {
+            console.log(`runSolution() failed lang is invaild ${lang}`);
+            vscode.window.showErrorMessage(`无效语言类型"${lang}"`);
+            return;
+        }
+
+        let problemContent = await acwingManager.getProblemContentById(problemID);
+        if (!problemContent) {
+            console.log(`runSolution() failed get problem content ${problemID}`);
+            vscode.window.showErrorMessage(`加载${problemID}失败，请稍后重试.`);
+            return;
+        }
+
+        const codeData = await fs.readFileSync(uri.fsPath, "utf8");
+        const data = {
+            'activity': "problem_run_code",
+            'problem_id': parseInt(problemID),
+            'code': codeData,
+            'language': lang,
+            'input': problemContent.codeStdin,
+        }
+        this.codeStdin = problemContent.codeStdin;
+        this.outputChannel.clear();
         this.outputChannel.show();
-        acwingManager.runCode(problemID, data, '3 4', 'C++');
-        // acwingManager.removeSocketEventListener(cb);
+        this.sendToSocket(data);
     }
 
     // 提交代码
-    public async submitSolution (problemID: string, uri: vscode.Uri) {
-        console.log('AcWingController::submitSolution()', problemID, uri);
-        const data = await fs.readFileSync(uri.fsPath, "utf8");
-
-        const that = this;
-        let cb = (event: WebSocket.MessageEvent):void => {
-            let ev = JSON.parse(event.data.toString());
-    
-            if (ev.activity === 'problem_run_code_status') {
-                that.onRunCodeStatus(ev);
-            } else if (ev.activity === 'problem_submit_code_status') {
-                that.onSubmitCodeStatus(ev);
-            }
+    public async submitSolution (problemID: string, uri: vscode.Uri, lang: string) {
+        console.log('AcWingController::submitCode()', problemID, uri);
+        if (!lang || !AcWingController.LANG_SUFFIX_MAP[lang]) {
+            console.log(`submitCode() failed lang is invaild ${lang}`);
+            vscode.window.showErrorMessage(`无效语言类型"${lang}"`);
+            return;
         }
 
-        acwingManager.addSocketEventListener(cb);
+        const codeData = await fs.readFileSync(uri.fsPath, "utf8");
+        const data = {
+          'activity': "problem_submit_code",
+          'problem_id': problemID,
+          'code': codeData,
+          'language': lang,
+          'mode': 'normal',
+          'problem_activity_id': 0,
+          'record': [],
+          'program_time': 0,
+        }
+        this.outputChannel.clear();
         this.outputChannel.show();
-        acwingManager.submitCode(problemID, data, 'C++');
+        this.sendToSocket(data);
     }
 
+    public initWebSocket () {
+        console.log('initWebSocket()');
+        if (this.webSocket) {
+            // 关闭之前的
+            console.log('initWebSocket() close socket.');
+            this.webSocket.close();
+        }
+
+        if (!acwingManager.isLogin() || !acwingManager.getCookie()) {
+            console.log('initWebSocket() failed not login.');
+            return;
+        }
+
+        this.webSocket = new WebSocket("wss://www.acwing.com/wss/socket/", {
+          headers:  {
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36',
+            'Cookie': acwingManager.getCookie(),
+          }
+        });
+    
+        // set listener
+        const that = this;
+        this.webSocket.on('open', function open() {
+            console.log('[webSocket] => open socket.')
+        });
+    
+        this.webSocket.on('message', function message(data) {
+            console.log('[webSocket] => received: %s', data);
+            try {
+                const event = JSON.parse(data.toString());
+
+                if (event.activity === "socket" && event.state == "ready") {
+                    that.isWebSocketReady = true;
+                    console.log('[webSocket] => state ready.');
+
+                    // 心跳包维持
+                    that.heartbeatIntervalID = setInterval(function () {
+                        that.webSocket?.send({ activity: "heartbeat" });
+                    }, 3e4);
+                } else if (event.activity === 'problem_run_code_status') {
+                    // 运行结果
+                    that.onRunCodeStatus(event);
+                } else if (event.activity === 'problem_submit_code_status') {
+                    // 提价结果
+                    that.onSubmitCodeStatus(event);
+                }
+            } catch(err) {
+                console.log('[webSocket] received error => ', err);
+            }
+        });
+      
+        this.webSocket.on('error', function message(data) {
+          console.log('[webSocket] => error: %s', data);
+        });
+      
+        this.webSocket.on('close', function message(data) {
+          console.log('[webSocket] => close: %s', data);
+          that.onCloseWebSocket();
+        });
+    }
+
+    // 发送数据，尝试3次
+    private sendToSocket (data: object) {
+        let str = JSON.stringify(data);
+        if (this.isWebSocketReady && this.webSocket) {
+            console.log(`[webSocket] <= ${str}`);
+            this.webSocket.send(str);
+            return;
+        }
+
+        console.log('sendToSocket() init websocket.');
+        // 尝试重连
+        this.initWebSocket();
+
+        // 等待几次
+        const that = this;
+        let count = 0;
+        let func = function() {
+            if (count >= 2) {
+                console.log('retry count >= 2');
+                return;
+            }
+            if (that.isWebSocketReady && that.webSocket) {
+                console.log(`[webSocket] <= ${str}`);
+                that.webSocket.send(str);
+                return;
+            }
+            count++;
+            console.log('retry count ' + count);
+            setTimeout(func, 3000);
+        };
+        setTimeout(func, 3000);
+    }
+    
+    private onCloseWebSocket() {
+        console.log('onCloseWebSocket()');
+    
+        this.isWebSocketReady = false;
+        if (this.heartbeatIntervalID) {
+          clearInterval(this.heartbeatIntervalID);
+          this.heartbeatIntervalID = undefined;
+        }
+    }
 
     private onRunCodeStatus (data: object) : void {
         console.log('onRunCodeStatus', data);
@@ -182,11 +329,11 @@ export class AcWingController implements Disposable {
             this.outputChannel.appendLine(`代码运行状态：${statusName}\n`);
 
             this.outputChannel.appendLine("输入");
-            this.outputChannel.appendLine(""); // TODO暂时不知道怎么处理
+            this.outputChannel.appendLine(this.codeStdin);
 
             this.outputChannel.appendLine("输出");
             this.outputChannel.appendLine(stdoutResult);
-            this.outputChannel.appendLine(timeResult);
+            this.outputChannel.append(timeResult);
         } else {
             // loading输出
             this.outputChannel.appendLine(statusName + "...");
@@ -213,6 +360,7 @@ export class AcWingController implements Disposable {
         if (status !== 'Uploading' && status !== 'Pending' && status !== 'Judging'){
             if (status === 'ACCEPTED') {
                 this.outputChannel.appendLine(`代码提交状态：${statusName}\n`);
+                // vscode.window.showInformationMessage(`ACCEPTED`);
                 return;
             }
 
@@ -227,7 +375,7 @@ export class AcWingController implements Disposable {
             this.outputChannel.appendLine(testcase_user_output);
 
             this.outputChannel.appendLine("标准答案");
-            this.outputChannel.appendLine(testcase_output);
+            this.outputChannel.append(testcase_output);
 
             // if($run_code_stdin.attr("preventEnter") === undefined){
             //     text = text.replace(/[\n]/g, "<br>&#8203;");

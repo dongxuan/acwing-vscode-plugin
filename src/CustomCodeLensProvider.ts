@@ -18,11 +18,12 @@ export class CustomCodeLensProvider implements vscode.CodeLensProvider {
     public provideCodeLenses(document: vscode.TextDocument): vscode.ProviderResult<vscode.CodeLens[]> {
 
         const content: string = document.getText();
-        const matchResult: RegExpMatchArray | null = content.match(/@acwing app=.* id=(.*) lang=.*/);
+        const matchResult: RegExpMatchArray | null = content.match(/@acwing app=.* id=(.*) lang=(.*)/);
         if (!matchResult) {
             return undefined;
         }
         const problemID: string | undefined = matchResult[1];
+        const lang = matchResult[2];
    
         let codeLensLine: number = document.lineCount - 1;
         for (let i: number = document.lineCount - 1; i >= 0; i--) {
@@ -52,13 +53,13 @@ export class CustomCodeLensProvider implements vscode.CodeLensProvider {
         codeLens.push(new vscode.CodeLens(range, {
             title: "调试代码",
             command: "acWing.testSolution",
-            arguments: [problemID, document.uri],
+            arguments: [problemID, document.uri, lang],
         }));
         
         codeLens.push(new vscode.CodeLens(range, {
             title: "提交答案",
             command: "acWing.submitSolution",
-            arguments: [problemID, document.uri],
+            arguments: [problemID, document.uri, lang],
         }));
 
         return codeLens;

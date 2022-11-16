@@ -18,8 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "acwing" is now active!');
 	vscode.window.registerFileDecorationProvider(acWingTreeItemDecorationProvider);
 
-	acwingManager.createAcWingSocket();
-
 	const problemTreeProvider = new ProblemTreeProvider();
 	let acWingTreeView = vscode.window.createTreeView("acWing", {treeDataProvider: problemTreeProvider});
 	acWingTreeView.title = "1";
@@ -27,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(acWingTreeView);
 
 	const acWingController = new AcWingController(context);
+	acWingController.initWebSocket();
 
 	vscode.commands.registerCommand('acWing.refreshEntry', () => problemTreeProvider.refresh());
 	vscode.commands.registerCommand('acWing.prevPage', () => problemTreeProvider.prevPage());
@@ -39,7 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// 编辑题目	
 	vscode.commands.registerCommand("acWing.editProblem", 
-		async (id: string) => acWingController.showProblem(id));
+		async (id: string) => acWingController.editProblem(id));
 
 	// 原题链接
 	vscode.commands.registerCommand("acWing.showSource", 
@@ -63,12 +62,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// 测试代码	
 	vscode.commands.registerCommand("acWing.testSolution", 
-		(async (problemID: string, uri: vscode.Uri) => acWingController.testSolution(problemID, uri)));
+		(async (problemID: string, uri: vscode.Uri, lang: string) => acWingController.runSolution(problemID, uri, lang)));
 
 	// 提交代码
 	vscode.commands.registerCommand("acWing.submitSolution", 
-		(async (problemID: string, uri: vscode.Uri) => acWingController.submitSolution(problemID, uri)));
+		(async (problemID: string, uri: vscode.Uri, lang: string) => acWingController.submitSolution(problemID, uri, lang)));
 
+	// 配置
+	vscode.commands.registerCommand("acWing.configure", () => {
+		vscode.commands.executeCommand("workbench.action.openSettings", `AcWing`);
+	})
 	context.subscriptions.push(codeLensController);
 }
 
