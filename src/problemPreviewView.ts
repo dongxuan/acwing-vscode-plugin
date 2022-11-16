@@ -41,6 +41,8 @@ class ProblemPreviewView implements Disposable {
     }
 
     private async showWebviewInternal(): Promise<void> {
+        console.log('showWebviewInternal()');
+        
         let title = 'AcWing';
         if (this.problem) {
             title = `${this.problem.index}. ${this.problem.name}`;
@@ -92,11 +94,9 @@ class ProblemPreviewView implements Disposable {
     private async getWebviewContent(): Promise<string> {
         this.problemContent = await acwingManager.getProblemContentById(this.problemID);
         if (!this.problemContent) {
-            // TODO 渲染失败页面
             return this.getWebviewFailedContent();
         }
 
-       
         const html = this.getHtmlTheme();
         const head = this.getHtmlHead();
         const titlte = `<div class="Subhead"><h2 class="Subhead-heading">${this.problemContent.name}</h2></div>`;
@@ -154,7 +154,6 @@ class ProblemPreviewView implements Disposable {
                 script-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com 'unsafe-inline';
                 style-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com 'unsafe-inline';"
             />
-            <title>${ this.problemContent?.name }</title>
             <link rel="stylesheet" href="${this.getResWebUri('acwing.css')}">
             <link rel="stylesheet" href="${this.getResWebUri('primer.css')}">
         `
@@ -266,13 +265,45 @@ class ProblemPreviewView implements Disposable {
     }
 
     private getWebviewFailedContent () : string {
-        return "failed."
+        let html = `
+        ${this.getHtmlTheme()}
+            <head>
+                ${this.getHtmlHead()}
+            </head>
+            <body> 
+                <div class="blankslate">
+                    <h3 class="blankslate-heading">似乎有些问题</h3>
+                    
+                    <p>加载失败，请重新刷新页面</p>
+                    
+                    <div id="reload" class="blankslate-action">
+                        <button class="btn btn-primary" type="button">刷新页面</button>
+                    </div>
+                </div>
+                <script>
+                    const vscode = acquireVsCodeApi();
+                    const button = document.getElementById('reload');
+                    button.onclick = () => vscode.postMessage({
+                        command: 'reloadProblem',
+                    });
+                </script>
+            </body>
+        </html>
+        
+        
+        `
+        return html;
     }
 
     private async onDidReceiveMessage(message: IWebViewMessage): Promise<void> {
         switch (message.command) {
             case "editProblem": {
                 await commands.executeCommand("editProblem", this.problemID);
+                break;    
+            }
+            case "reloadProblem": {
+                console.log('reloadProblem()');
+                await this.showWebviewInternal();
                 break;
             }
         }
