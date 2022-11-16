@@ -332,8 +332,7 @@ img.MathJax_strut {border: 0!important; padding: 0!important; margin: 0!importan
 .MathJax .noError {font-size: 90%; text-align: left; color: black; padding: 1px 3px; border: 1px solid}
 @font-face {font-family: MathJax_AMS; src: url('https://cdn.acwing.com/static/MathJax-2.6-latest/fonts/HTML-CSS/TeX/woff/MathJax_AMS-Regular.woff?rev=2.6.1') format('woff'), url('https://cdn.acwing.com/static/MathJax-2.6-latest/fonts/HTML-CSS/TeX/otf/MathJax_AMS-Regular.otf?rev=2.6.1') format('opentype')}
 
-
-.martor-preview pre {
+/* .martor-preview pre {
     padding: 2px;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-kerning: auto;
@@ -352,4 +351,49 @@ img.MathJax_strut {border: 0!important; padding: 0!important; margin: 0!importan
 
     display: block;
     color: black;
+} */
+
+/* 黑色 */
+.martor-preview pre {
+  padding: 12px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: var(--color-canvas-subtle);
+  border-radius: 6px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.martor-preview pre code {
+  display: inline;
+  max-width: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  line-height: inherit;
+  word-wrap: normal;
+  background-color: transparent;
+  border: 0;
+  color: var(--color-fg-default);
+}
+
+#solve {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  border: 0;
+  border-radius: 6px;
+  margin: 1rem 0;
+  padding: 0.2rem 1rem;
+  color: white;
+  background-color: var(--vscode-button-background);
+}
+  
+#solve:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+#solve:active {
+  border: 0;
 }

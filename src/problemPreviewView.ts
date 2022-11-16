@@ -96,106 +96,69 @@ class ProblemPreviewView implements Disposable {
             return this.getWebviewFailedContent();
         }
 
-        // Get path to resource on disk
-        const onDiskPath1 = Uri.file(
-            path.join(this.extensionPath, 'media', 'acwing.css')
-        );
-        const onDiskPath2 = Uri.file(
-            path.join(this.extensionPath, 'media', 'primer.css')
-        );
-
-        // And get the special URI to use with the webview
-        const cssfile1 = this.panel?.webview.asWebviewUri(onDiskPath1);
-        const cssfile2 = this.panel?.webview.asWebviewUri(onDiskPath2);
-
-        const button: { element: string, script: string, style: string } = {
-            element: `<button id="solve">Code Now</button>`,
-            script: `const button = document.getElementById('solve');
-                    button.onclick = () => vscode.postMessage({
-                        command: 'ShowProblem',
-                    });`,
-            style: `<style>
-                #solve {
-                    position: fixed;
-                    bottom: 1rem;
-                    right: 1rem;
-                    border: 0;
-                    margin: 1rem 0;
-                    padding: 0.2rem 1rem;
-                    color: white;
-                    background-color: var(--vscode-button-background);
-                }
-                #solve:hover {
-                    background-color: var(--vscode-button-hoverBackground);
-                }
-                #solve:active {
-                    border: 0;
-                }
-                </style>`,
-        };
-
-        const titlte = `<div class="Subhead">
-                <h2 class="Subhead-heading">
-                    ${this.problemContent.name}
-                </h2></div>`;
-
+       
+        const html = this.getHtmlTheme();
+        const head = this.getHtmlHead();
+        const titlte = `<div class="Subhead"><h2 class="Subhead-heading">${this.problemContent.name}</h2></div>`;
         const links = this.getHtmlLinkArea(); 
         const table = this.getHtmlTable();
         const tags = this.getHtmlTags();  
-
         const body: string = this.problemContent.contentHtml;
-        this.panel?.webview.cspSource
+        const script = this.getHtmlScript();
 
-        // TODO 样式问题
-        // Light	data-color-mode="light" data-light-theme="light"
-        // Dark	data-color-mode="dark" data-dark-theme="dark"
-        // Dark Dimmed	data-color-mode="dark" data-dark-theme="dark_dimmed"
-        // Dark High Contrast	data-color-mode="dark" data-dark-theme="dark_high_contrast"
-        // <html data-color-mode="dark" data-dark-theme="dark_dimmed">
         return `
             <!DOCTYPE html>
-            <html data-color-mode="dark" data-dark-theme="dark_dimmed">
-            <head>
-                <meta http-equiv="Content-Security-Policy"
-                content = "default-src https://cdn.acwing.com 'unsafe-inline' 'none' ; 
-                img-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com  https:; 
-                script-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com 'unsafe-inline'; 
-                style-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com 'unsafe-inline';"/>
-                ${!this.sideMode ? button.style : ""}
-                <title>${ this.problemContent.name }</title>
-                <link rel="stylesheet" href="${cssfile1}">
-                <link rel="stylesheet" href="${cssfile2}">
-            </head>
-            <body style="padding-bottom: 22px;">
+            ${html}
+            <head>${head}</head>
+            <body style="padding-bottom: 100px;">
                 ${titlte}
                 ${links}
                 ${table}
                 ${tags}
                 ${body}
-                ${!this.sideMode ? button.element : ""}
-                <script>
-                    const vscode = acquireVsCodeApi();
-                    ${!this.sideMode ? button.script : ""}
-                </script>
-                <script type="text/javascript" src="https://cdn.acwing.com/static/MathJax-2.6-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-                <script type="text/x-mathjax-config;executed=true">
-                    MathJax.Hub.Config({
-                        tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
-                        showMathMenu: false,
-                    });
-                </script>
-                <script>
-                    console.log("MathJax.Hub.Config");
-                    MathJax.Hub.Config({
-                        tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
-                        showMathMenu: false,
-                    });
-                    //MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
-                </script>
+                ${script}   
             </body>
             </html>
         `;
         return "";
+    }
+
+    private getResWebUri(resName: string) {
+        const onDiskPath = Uri.file(
+            path.join(this.extensionPath, 'media', resName)
+        );
+        // And get the special URI to use with the webview
+        return this.panel?.webview.asWebviewUri(onDiskPath);
+    }
+
+    private getHtmlTheme() {
+        // Light	data-color-mode="light" data-light-theme="light"
+        // Dark	data-color-mode="dark" data-dark-theme="dark"
+        // Dark Dimmed	data-color-mode="dark" data-dark-theme="dark_dimmed"
+        // Dark High Contrast	data-color-mode="dark" data-dark-theme="dark_high_contrast"
+        let nowKind = vscode.window.activeColorTheme.kind;
+        if (nowKind == vscode.ColorThemeKind.Dark) {
+            return `<html data-color-mode="dark" data-dark-theme="dark_dimmed">`;
+        } else if (nowKind == vscode.ColorThemeKind.HighContrast) {
+            return `<html data-color-mode="dark" data-dark-theme="dark_dimmed">`; 
+        } else {
+            return `<html data-color-mode="light" data-dark-theme="light">`;
+        }
+    }
+
+    private getHtmlHead() {
+        let html = `
+            <meta http-equiv="Content-Security-Policy"
+                content = "default-src https://cdn.acwing.com 'unsafe-inline' 'none' ; 
+                img-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com  https:; 
+                script-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com 'unsafe-inline';
+                style-src ${ this.panel?.webview.cspSource } https://cdn.acwing.com 'unsafe-inline';"
+            />
+            <title>${ this.problemContent?.name }</title>
+            <link rel="stylesheet" href="${this.getResWebUri('acwing.css')}">
+            <link rel="stylesheet" href="${this.getResWebUri('primer.css')}">
+        `
+        return html;
     }
 
     // 获取HTML的跳转区域
@@ -273,13 +236,42 @@ class ProblemPreviewView implements Disposable {
         return html;
     }
 
+    private getHtmlScript() {
+        let html = `
+            <button id="solve">Code Now</button>                
+            <script type="text/javascript" src="https://cdn.acwing.com/static/MathJax-2.6-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+            <script type="text/x-mathjax-config;executed=true">
+                MathJax.Hub.Config({
+                    tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+                    showMathMenu: false,
+                });
+            </script>
+            <script>
+                console.log("MathJax.Hub.Config");
+                MathJax.Hub.Config({
+                    tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]},
+                    showMathMenu: false,
+                });
+                //MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+            </script>
+            <script>
+                const vscode = acquireVsCodeApi();
+                const button = document.getElementById('solve');
+                button.onclick = () => vscode.postMessage({
+                    command: 'editProblem',
+                });
+            </script> 
+        `
+        return html;
+    }
+
     private getWebviewFailedContent () : string {
         return "failed."
     }
 
     private async onDidReceiveMessage(message: IWebViewMessage): Promise<void> {
         switch (message.command) {
-            case "ShowProblem": {
+            case "editProblem": {
                 await commands.executeCommand("editProblem", this.problemID);
                 break;
             }
