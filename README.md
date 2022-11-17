@@ -8,6 +8,14 @@
 * 支持AcWing题目分页预览
 * 支持测试，提交代码
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dongxuan/acwing-vscode-plugin/main/docs/p1.png" />
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dongxuan/acwing-vscode-plugin/main/docs/p2.jpg" />
+</p>
+
 
 下个版本计划（~~如果有的话~~）：
 
@@ -28,6 +36,10 @@ https://github.com/dongxuan/acwing-vscode-plugin
 
 * `acWing.cookies`: Acwing cookie配置，有cookie才可以进行代码测试提交
 > 注意：由于AcWing一登录会踢掉另外一端，所以只好用配置cookie的方式登录。请打开acwing网站并登录，按F12调出控制台，并按下图截取cookie进行配置（不要使用js的document.cookie获取，那个获取的cookie不全）。
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/dongxuan/acwing-vscode-plugin/main/docs/cookie.jpg" />
+</p>
 
 * `acWing.defaultLanguage`: 默认编程语言
 * `acWing.workspaceFolder`: 代码存储目录
