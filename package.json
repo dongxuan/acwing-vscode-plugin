@@ -96,11 +96,6 @@
     "menus": {
       "view/title": [
         {
-          "command": "acWing.configure",
-          "when": "view == acWing",
-          "group": "navigation@5"
-        },
-        {
           "command": "acWing.refreshEntry",
           "when": "view == acWing",
           "group": "navigation@4"
