@@ -1,15 +1,33 @@
 {
-  "name": "acwing",
-  "displayName": "acwing",
-  "description": "",
+  "name": "vscode-acwing",
+  "displayName": "vscode-acwing",
+  "description": "Solve AcWing problems in VS Code",
   "version": "1.0.0",
+  "author": "yseternal",
   "publisher": "richard223",
+  "license": "MIT",
+  "icon": "media/logo.png",
   "engines": {
     "vscode": "^1.73.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dongxuan/acwing-vscode-plugin"
+  },
+  "bugs": {
+    "url": "https://github.com/dongxuan/acwing-vscode-plugin",
+    "email": "yseternalxuan@gmail.com"
+  },
+  "homepage": "https://github.com/dongxuan/acwing-vscode-plugin/blob/master/README.md",
   "categories": [
-    "AcWing"
+    "Other",
+    "Snippets"
   ],
+  "keywords": [
+    "acwing",
+    "algorithm"
+  ],
+  "preview": true,
   "activationEvents": [
     "onCommand:acwing.setCookie",
     "onCommand:acwing.gotoPage",
@@ -24,7 +42,7 @@
         {
           "id": "ac-problem-explorer",
           "title": "AcWing",
-          "icon": "media/logo.png"
+          "icon": "media/logo-w.png"
         }
       ]
     },
@@ -33,7 +51,7 @@
         {
           "id": "acWing",
           "name": "AcWing",
-          "icon": "media/logo.png",
+          "icon": "media/logo-w.png",
           "contextualTitle": "AcWing"
         }
       ]
