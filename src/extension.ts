@@ -18,6 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "acwing" is now active!');
 	vscode.window.registerFileDecorationProvider(acWingTreeItemDecorationProvider);
 
+
 	const problemTreeProvider = new ProblemTreeProvider();
 	let acWingTreeView = vscode.window.createTreeView("acWing", {treeDataProvider: problemTreeProvider});
 	acWingTreeView.title = "1";
@@ -25,13 +26,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(acWingTreeView);
 
 	const acWingController = new AcWingController(context);
-	acWingController.initWebSocket();
-
 	vscode.commands.registerCommand('acWing.refreshEntry', () => problemTreeProvider.refresh());
 	vscode.commands.registerCommand('acWing.prevPage', () => problemTreeProvider.prevPage());
 	vscode.commands.registerCommand('acWing.nextPage', () => problemTreeProvider.nextPage());
 	vscode.commands.registerCommand('acWing.gotoPage', () => problemTreeProvider.gotoPage());
 
+	// 登录设置cookie
+	vscode.commands.registerCommand("acWing.setCookie", () => acWingController.signIn());
+	
 	// 预览题目
 	vscode.commands.registerCommand("acWing.previewProblem",
 		async (id: string, problem: Problem) => acWingController.previewProblem(id, problem));
@@ -72,6 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand("acWing.configure", () => {
 		vscode.commands.executeCommand("workbench.action.openSettings", `AcWing`);
 	})
+
 	context.subscriptions.push(codeLensController);
 }
 

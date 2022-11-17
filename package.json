@@ -10,6 +10,7 @@
     "Other"
   ],
   "activationEvents": [
+    "onCommand:acwing.setCookie",
     "onCommand:acwing.gotoPage",
     "onCommand:acwing.previewProblem",
     "onCommand:acwing.editProblem",
@@ -37,6 +38,11 @@
       ]
     },
     "commands": [
+      {
+        "command": "acWing.setCookie",
+        "title": "登录设置cookies",
+        "icon": "$(sign-in)"
+      },
       {
         "command": "acWing.refreshEntry",
         "title": "刷新",
@@ -103,7 +109,7 @@
                 "title": "Cookies",
                 "type": "string",
                 "scope": "application",
-                "description": "打开AcWing登录，F12在控制台执行document.cookie将结果粘贴在这里",
+                "description": "打开AcWing并登录，复制cookies粘贴在这里",
                 "default": "",
                 "order": 1
               },

@@ -39,6 +39,21 @@ export class AcWingController implements Disposable {
         problemPreviewView.setContext(this.mContext);
     }
 
+    public async signIn() {
+        console.log('signIn()');
+        const pageOption: vscode.InputBoxOptions = {
+			title: "acwing cookies",
+			prompt: "打开AcWing并登录，复制cookies粘贴在这里",
+		};
+
+		let inputCookie: string  = await vscode.window.showInputBox(pageOption) || "";
+		if (!inputCookie) {
+            // vscode.window.showErrorMessage('无效cookies');
+			return;
+		}
+        acwingManager.setCookie(inputCookie);
+    }
+
     // 预览题目
     public previewProblem (problemID: string, problem: Problem) {
         console.log('AcWingController::previewProblem() ' + problemID);
@@ -169,6 +184,7 @@ export class AcWingController implements Disposable {
         this.codeStdin = problemContent.codeStdin;
         this.outputChannel.clear();
         this.outputChannel.show();
+        this.outputChannel.appendLine('RunSolution...');
         this.sendToSocket(data);
     }
 
@@ -194,6 +210,7 @@ export class AcWingController implements Disposable {
         }
         this.outputChannel.clear();
         this.outputChannel.show();
+        this.outputChannel.appendLine('SubmitSolution...');
         this.sendToSocket(data);
     }
 
@@ -207,6 +224,12 @@ export class AcWingController implements Disposable {
 
         if (!acwingManager.isLogin() || !acwingManager.getCookie()) {
             console.log('initWebSocket() failed not login.');
+            vscode.window.showInformationMessage('请设置acwing cooke.', ... ['OK']).then(function(val) {
+				if (val) {
+					vscode.commands.executeCommand('acWing.setCookie');
+				}
+			});
+            this.outputChannel.appendLine('请设置cookie.');
             return;
         }
 
@@ -251,11 +274,17 @@ export class AcWingController implements Disposable {
       
         this.webSocket.on('error', function message(data) {
           console.log('[webSocket] => error: %s', data);
+          if (data.message.indexOf('Unexpected server response: 403') >=0) {
+            that.outputChannel.appendLine('无效cookie，请设置cookie');
+          } else {
+            that.outputChannel.appendLine('Error ' + data);
+          }
         });
       
         this.webSocket.on('close', function message(data) {
           console.log('[webSocket] => close: %s', data);
           that.onCloseWebSocket();
+          that.outputChannel.appendLine('Close ' + data);
         });
     }
 

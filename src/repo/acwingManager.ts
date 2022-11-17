@@ -1,15 +1,12 @@
 // Copyright (c) jdneo. All rights reserved.
 // Licensed under the MIT license.
 
-import { Disposable, workspace, ConfigurationChangeEvent } from "vscode";
+import { Disposable, workspace, ConfigurationChangeEvent, ConfigurationTarget, commands } from "vscode";
 import { Problem, ProblemState } from './Problem'
 import { ProblemContent } from './ProblemContent';
 import fetch, { Headers } from 'node-fetch';
 import * as cheerio from 'cheerio';
 import * as WebSocket from 'ws';
-
-// const COOKIE = 'aliyungf_tc=e5fce49a08e658ac929effce9bbf42c5d9f01a512ecaf1c39d33e9df323860b4; file_6712727_readed=""; file_4813_readed=""; file_566732_readed=""; file_4796_readed=""; file_52601_readed=""; file_52587_readed=""; file_5036_readed=""; file_4814_readed=""; file_63971_readed=""; file_5560006_readed=""; file_7222675_readed=""; csrftoken=t08fEOGvrwSgU7Uo2BzS4oWGc1IR6CinLCbKe3fRNuerZDw8bfB41rzIbRLADT9c; sessionid=ab3xpwtltbhr4kirxacqwr6de4aqww2c; file_589_readed=""';
-
 class AcwingManager implements Disposable {
   private explorerProblemsMap: Map<number, Problem[]> = new Map<number, Problem[]>();
   private problemContentMap: Map<string, ProblemContent> = new Map<string, ProblemContent>();
@@ -21,7 +18,11 @@ class AcwingManager implements Disposable {
     this.acWingCookie = workspace.getConfiguration().get<string>("acWing.cookies", '');
     this.configurationChangeListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
         if (event.affectsConfiguration("acWing.cookies")) {
-            this.acWingCookie = workspace.getConfiguration().get<string>("acWing.cookies", '');
+          let cookie = workspace.getConfiguration().get<string>("acWing.cookies", '');
+          cookie = cookie.trim();
+          this.acWingCookie = cookie;
+          console.log('onDidChangeConfiguration()', this.acWingCookie);
+          commands.executeCommand("acWing.refreshEntry", `AcWing`);    
         }
     }, this);
   }
@@ -57,6 +58,12 @@ class AcwingManager implements Disposable {
 
   public getCookie (): string {
     return this.acWingCookie;
+  }
+
+  public setCookie (val: string) {
+    console.log('setCookie()', val);
+    workspace.getConfiguration().update("acWing.cookies", val, ConfigurationTarget.Global);
+    this.acWingCookie = val;
   }
 
   public dispose(): void {

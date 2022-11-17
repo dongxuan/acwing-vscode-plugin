@@ -95,6 +95,18 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 	}
 
 	getTreeItem(element: Problem): vscode.TreeItem {
+		if (element.id === "notSignIn") {
+            return {
+                label: element.name,
+                collapsibleState: vscode.TreeItemCollapsibleState.None,
+                command: {
+                    command: "acWing.setCookie",
+                    title: "登录设置cookies",
+					arguments: []
+                },
+            };
+        }
+
 		let iconPath: string = "";
    		if (element.state == ProblemState.ACCEPTED) {
 			iconPath =  path.join(__filename, '..', '..', 'resources', 'check.png');
@@ -118,12 +130,19 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 	}
 
 	async getChildren(element?: Problem): Promise<Problem[]> {
-		// if (!this.workspaceRoot) {
-		// 	vscode.window.showInformationMessage('No dependency in empty workspace');
-		// 	return Promise.resolve([]);
-		// }
+		if (!acwingManager.isLogin()) {
+			vscode.window.showInformationMessage('请设置acwing cooke.', ... ['OK']).then(function(val) {
+				if (val) {
+					vscode.commands.executeCommand('acWing.setCookie');
+				}
+			});
+			let problem = new Problem();
+			problem.id = "notSignIn",
+			problem.name = "Set cookie to sign in to acwing";
+			return [ problem ];
+		}
+
 		if (!element) {
-			// vscode.window.showInformationMessage('Loading problems ...');
 			let problemNodes = await acwingManager.getProblemsByPage(this.currentPage);
 			if (problemNodes) {
 				this.updateTitlte();
