@@ -1,8 +1,8 @@
 /*
  * @Author: richard 
  * @Date: 2022-11-17 14:55:29 
- * @Last Modified by:   richard 
- * @Last Modified time: 2022-11-17 14:55:29 
+ * @Last Modified by: richard
+ * @Last Modified time: 2022-11-17 15:16:05
  */
 import * as fs from "fs";
 import * as vscode from 'vscode';
@@ -63,6 +63,7 @@ export class AcWingController implements Disposable {
     public clearCache() {
         console.log('clearCache()');
         acwingManager.clearCache();
+        this.mContext.globalState.update('lastPage', 1);
     }
 
     // 预览题目

@@ -1,8 +1,8 @@
 /*
  * @Author: richard 
  * @Date: 2022-11-17 14:55:50 
- * @Last Modified by:   richard 
- * @Last Modified time: 2022-11-17 14:55:50 
+ * @Last Modified by: richard
+ * @Last Modified time: 2022-11-17 15:14:40
  */
 import * as vscode from 'vscode';
 import * as fs from 'fs';
@@ -19,16 +19,19 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 	private currentPage = 1;
 	private problemList: Problem[] = [];
 	private treeView: vscode.TreeView<Problem> | undefined;
+	private mContext: vscode.ExtensionContext | undefined;
 
 	constructor() {
 
 	}
 
 	public init (context: vscode.ExtensionContext) {
+		this.currentPage = context.globalState.get('lastPage', 1);
 		let acWingTreeView = vscode.window.createTreeView("acWing", {treeDataProvider: this});
-		acWingTreeView.title = "1";
+		acWingTreeView.title = this.currentPage.toString();
 		this.setTreeView(acWingTreeView);
 		context.subscriptions.push(acWingTreeView);
+		this.mContext = context;
 	}
 
 	public async refresh(): Promise<void> {
@@ -159,6 +162,7 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 			let problemNodes = await acwingManager.getProblemsByPage(this.currentPage);
 			if (problemNodes) {
 				this.updateTitlte();
+				this.mContext?.globalState.update('lastPage', this.currentPage);
 				return problemNodes;
 			}
 		}
