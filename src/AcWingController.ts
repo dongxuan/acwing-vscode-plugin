@@ -2,14 +2,14 @@
  * @Author: richard 
  * @Date: 2022-11-17 14:55:29 
  * @Last Modified by: richard
- * @Last Modified time: 2022-11-17 15:16:05
+ * @Last Modified time: 2022-11-17 16:08:14
  */
 import * as fs from "fs";
 import * as vscode from 'vscode';
 import * as WebSocket from 'ws';
 import * as path from "path";
 import * as fse from "fs-extra";
-import * as chalk from 'chalk';
+import * as filenamify from 'filenamify';
 
 import { ConfigurationChangeEvent, Disposable, languages, workspace, FileSystemProvider, ExtensionContext } from "vscode";
 import { customCodeLensProvider, CustomCodeLensProvider } from "./preview/CustomCodeLensProvider";
@@ -66,6 +66,27 @@ export class AcWingController implements Disposable {
         this.mContext.globalState.update('lastPage', 1);
     }
 
+    // 点击问题的时候
+    public async exploreProblem (problemID: string, problem: Problem) {
+        console.log('AcWingController::previewProblem() ' + problemID);
+        if (!problemID) {
+            problemID = await this.inputProblemID();
+        }
+        if (!problemID) return;
+
+        // 根据模式进行处理
+        const mode = workspace.getConfiguration().get<string>("acWing.clickProblemItem", 'Problem');
+        if (mode === 'Problem') {
+            return this.previewProblem(problemID, problem);
+        } else if (mode === 'Code') {
+            return this.editProblem(problemID);
+        } else {
+            // 同时打开题目以及编辑器
+            problemPreviewView.show(problemID, problem, true);
+            return this.editProblem(problemID);
+        }
+    }
+
     // 预览题目
     public async previewProblem (problemID: string, problem: Problem) {
         console.log('AcWingController::previewProblem() ' + problemID);
@@ -77,7 +98,7 @@ export class AcWingController implements Disposable {
     }
 
     // 显示编辑器
-    public async editProblem (problemID: string) {
+    public async editProblem (problemID: string, isSideMode: boolean = false) {
         if (!problemID) {
             problemID = await this.inputProblemID();
         }
@@ -97,16 +118,24 @@ export class AcWingController implements Disposable {
         if (!fileFolder) {
             fileFolder = this.mContext.globalStorageUri.fsPath;
         }
-        const fileName: string = problemContent.name.trim() + '.' 
-            + AcWingController.LANG_SUFFIX_MAP[language];
+        let fileName: string = problemContent.name.trim();
+        fileName = fileName.replace(/ /g, "");
+        fileName = filenamify(fileName, {replacement: ''});
+        fileName += '.' + AcWingController.LANG_SUFFIX_MAP[language]
         let finalPath: string = path.join(fileFolder, fileName);
 
         // create file
-        this.createProblemCode(problemID, problemContent, finalPath, language);
-    
-        // TODO 显示几行
-        vscode.window.showTextDocument(vscode.Uri.file(finalPath), 
-            { preview: false, viewColumn: vscode.ViewColumn.One });
+        try {
+            this.createProblemCode(problemID, problemContent, finalPath, language);
+            // 显示几行
+            vscode.window.showTextDocument(vscode.Uri.file(finalPath), 
+                { 
+                    preview: false, 
+                    viewColumn: isSideMode ? vscode.ViewColumn.Two: vscode.ViewColumn.One 
+                });
+        } catch (err) {
+            vscode.window.showErrorMessage('Error ' + err);
+        }
     }
 
     public async inputProblemID (): Promise<string> {

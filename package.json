@@ -107,7 +107,7 @@
         },
         {
           "command": "acWing.gotoPage",
-           "when": "view == acWing",
+          "when": "view == acWing",
           "group": "navigation@3"
         },
         {
@@ -124,107 +124,107 @@
     },
     "configuration": [
       {
-          "title": "AcWing",
-          "properties": {
-              "acWing.cookies": {
-                "title": "Cookies",
-                "type": "string",
-                "scope": "application",
-                "description": "打开AcWing并登录，复制cookies粘贴在这里",
-                "default": "",
-                "order": 1
-              },
-              "acWing.defaultLanguage": {
-                  "title": "编程语言",
-                  "type": "string",
-                  "default": "C++",
-                  "enum": [
-                    "C++",
-                    "C",
-                    "Java", 
-                    "Python",
-                    "Javascript",
-                    "Python3",
-                    "Go"
-                  ],
-                  "scope": "application",
-                  "description": "设置默认编程语言",
-                  "order": 2
-              },
-              "acWing.workspaceFolder": {
-                "title": "代码存储目录",
-                "type": "string",
-                "scope": "application",
-                "description": "代码文件目录路径，默认为ExtensionContext.globalStoragePath",
-                "default": "",
-                "order": 3
-              },
-              "acWing.colorizeProblems": {
-                "type": "boolean",
-                "default": true,
-                "scope": "application",
-                "description": "题目浏览器中是否显示难度颜色",
-                "order": 4
-              },
-              "acWing.clickProblemItem": {
-                  "type": "string",
-                  "default": "Problem",
-                  "enum": [
-                      "Problem",
-                      "Code",
-                      "Both"
-                  ],
-                  "enumDescriptions": [
-                      "显示题目",
-                      "显示代码",
-                      "都显示"
-                  ],
-                  "scope": "application",
-                  "description": "双击题目浏览器的题目时",
-                  "order": 5
-              },
-              "acWing.editor.shortcuts": {
-                  "type": "array",
-                  "default": [
-                    "题目预览",
-                    "题目解答",
-                    "调试代码",
-                    "提交答案",
-                    "原题链接",
-                    "提交记录",
-                    "讨论组",
-                    "视频解答"
-                  ],
-                  "scope": "application",
-                  "items": {
-                      "type": "string",
-                      "enum": [
-                          "题目预览",
-                          "题目解答",
-                          "调试代码",
-                          "提交答案",
-                          "原题链接",
-                          "提交记录",
-                          "讨论组",
-                          "视频解答"
-                      ],
-                      "enumDescriptions": [
-                          "代码编辑器中显示【题目预览】",
-                          "代码编辑器中显示【题目解答】",
-                          "代码编辑器中显示【调试代码】",
-                          "代码编辑器中显示【提交答案】",
-                          "代码编辑器中显示【原题链接】",
-                          "代码编辑器中显示【提交记录】",
-                          "代码编辑器中显示【讨论组】",
-                          "代码编辑器中显示【视频解答】"
-                      ]
-                  },
-                  "description": "定义代码编辑器中的快捷方式",
-                  "order": 6
-              }
+        "title": "AcWing",
+        "properties": {
+          "acWing.cookies": {
+            "title": "Cookies",
+            "type": "string",
+            "scope": "application",
+            "description": "打开AcWing并登录，复制cookies粘贴在这里",
+            "default": "",
+            "order": 1
+          },
+          "acWing.defaultLanguage": {
+            "title": "编程语言",
+            "type": "string",
+            "default": "C++",
+            "enum": [
+              "C++",
+              "C",
+              "Java",
+              "Python",
+              "Javascript",
+              "Python3",
+              "Go"
+            ],
+            "scope": "application",
+            "description": "设置默认编程语言",
+            "order": 2
+          },
+          "acWing.workspaceFolder": {
+            "title": "代码存储目录",
+            "type": "string",
+            "scope": "application",
+            "description": "代码文件目录路径，默认为ExtensionContext.globalStoragePath",
+            "default": "",
+            "order": 3
+          },
+          "acWing.colorizeProblems": {
+            "type": "boolean",
+            "default": true,
+            "scope": "application",
+            "description": "题目浏览器中是否显示难度颜色",
+            "order": 4
+          },
+          "acWing.clickProblemItem": {
+            "type": "string",
+            "default": "Problem",
+            "enum": [
+              "Problem",
+              "Code",
+              "Both"
+            ],
+            "enumDescriptions": [
+              "显示题目",
+              "显示代码",
+              "都显示"
+            ],
+            "scope": "application",
+            "description": "点击题目浏览器的题目时",
+            "order": 5
+          },
+          "acWing.editor.shortcuts": {
+            "type": "array",
+            "default": [
+              "题目预览",
+              "题目解答",
+              "调试代码",
+              "提交答案",
+              "原题链接",
+              "提交记录",
+              "讨论组",
+              "视频解答"
+            ],
+            "scope": "application",
+            "items": {
+              "type": "string",
+              "enum": [
+                "题目预览",
+                "题目解答",
+                "调试代码",
+                "提交答案",
+                "原题链接",
+                "提交记录",
+                "讨论组",
+                "视频解答"
+              ],
+              "enumDescriptions": [
+                "代码编辑器中显示【题目预览】",
+                "代码编辑器中显示【题目解答】",
+                "代码编辑器中显示【调试代码】",
+                "代码编辑器中显示【提交答案】",
+                "代码编辑器中显示【原题链接】",
+                "代码编辑器中显示【提交记录】",
+                "代码编辑器中显示【讨论组】",
+                "代码编辑器中显示【视频解答】"
+              ]
+            },
+            "description": "定义代码编辑器中的快捷方式",
+            "order": 6
           }
+        }
       }
-  ]
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -253,14 +253,11 @@
   },
   "dependencies": {
     "@types/request-promise": "^4.1.48",
-    "axios": "^1.1.3",
-    "chalk": "4.1.2",
     "cheerio": "^1.0.0-rc.12",
+    "filenamify": "4.3.0",
     "fs-extra": "^10.1.0",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
-    "request": "^2.88.2",
-    "request-promise": "^4.2.6",
     "ws": "^8.11.0"
   }
 }

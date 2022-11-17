@@ -32,6 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('acWing.gotoPage', () => problemTreeProvider.gotoPage()),
 		vscode.commands.registerCommand("acWing.setCookie", () => acWingController.signIn()),
 		vscode.commands.registerCommand("acWing.clear", () => acWingController.clearCache()),
+		vscode.commands.registerCommand("acWing.exploreProblem", async (id: string, problem: Problem) => acWingController.exploreProblem(id, problem)),
 		vscode.commands.registerCommand("acWing.previewProblem", async (id: string, problem: Problem) => acWingController.previewProblem(id, problem)),
 		vscode.commands.registerCommand("acWing.editProblem", async (id: string) => acWingController.editProblem(id)),
 		vscode.commands.registerCommand("acWing.showSource", (async (id: string) => acWingController.showSource(id))),

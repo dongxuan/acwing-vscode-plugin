@@ -2,7 +2,7 @@
  * @Author: richard 
  * @Date: 2022-11-17 14:55:50 
  * @Last Modified by: richard
- * @Last Modified time: 2022-11-17 15:14:40
+ * @Last Modified time: 2022-11-17 15:49:27
  */
 import * as vscode from 'vscode';
 import * as fs from 'fs';
@@ -138,8 +138,8 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 			resourceUri: element.uri,
 			collapsibleState: vscode.TreeItemCollapsibleState.None,
 			command: {
-				title: "Preview Problem",
-				command: "acWing.previewProblem",
+				title: "Click Problem",
+				command: "acWing.exploreProblem",
 				arguments: [element.id, element],
 			}
 		};
