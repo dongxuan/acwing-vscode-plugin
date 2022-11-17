@@ -1,3 +1,10 @@
+/*
+ * @Author: richard 
+ * @Date: 2022-11-17 14:56:17 
+ * @Last Modified by:   richard 
+ * @Last Modified time: 2022-11-17 14:56:17 
+ */
+
 import { URLSearchParams } from "url";
 import { FileDecoration, FileDecorationProvider, ProviderResult, ThemeColor, Uri, workspace, WorkspaceConfiguration } from "vscode";
 

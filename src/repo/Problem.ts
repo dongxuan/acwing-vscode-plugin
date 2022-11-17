@@ -1,6 +1,9 @@
-// Copyright (c) jdneo. All rights reserved.
-// Licensed under the MIT license.
-
+/*
+ * @Author: richard 
+ * @Date: 2022-11-17 14:56:00 
+ * @Last Modified by:   richard 
+ * @Last Modified time: 2022-11-17 14:56:00 
+ */
 import { Command, Uri } from "vscode";
 
 export enum ProblemState {

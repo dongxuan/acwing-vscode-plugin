@@ -41,7 +41,38 @@
       {
         "command": "acWing.setCookie",
         "title": "登录设置cookies",
+        "category": "AcWing",
         "icon": "$(sign-in)"
+      },
+      {
+        "command": "acWing.configure",
+        "title": "配置",
+        "category": "AcWing",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "acWing.gotoPage",
+        "title": "跳转页面",
+        "category": "AcWing",
+        "icon": "$(reply)"
+      },
+      {
+        "command": "acWing.clear",
+        "title": "清除缓存",
+        "category": "AcWing",
+        "icon": "$(extensions-refresh)"
+      },
+      {
+        "command": "acWing.previewProblem",
+        "title": "查看题目",
+        "category": "AcWing",
+        "icon": "$(explorer-view-icon)"
+      },
+      {
+        "command": "acWing.editProblem",
+        "title": "解题",
+        "category": "AcWing",
+        "icon": "$(keybindings-edit)"
       },
       {
         "command": "acWing.refreshEntry",
@@ -60,16 +91,6 @@
         "command": "acWing.nextPage",
         "title": "下一页",
         "icon": "$(triangle-left)"
-      },
-      {
-        "command": "acWing.configure",
-        "title": "配置",
-        "icon": "$(settings-gear)"
-      },
-      {
-        "command": "acWing.gotoPage",
-        "title": "跳转页面",
-        "icon": "$(reply)"
       }
     ],
     "menus": {
@@ -86,7 +107,7 @@
         },
         {
           "command": "acWing.gotoPage",
-          "when": "view == acWing",
+           "when": "view == acWing",
           "group": "navigation@3"
         },
         {

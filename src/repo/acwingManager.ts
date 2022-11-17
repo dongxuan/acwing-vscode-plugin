@@ -1,6 +1,9 @@
-// Copyright (c) jdneo. All rights reserved.
-// Licensed under the MIT license.
-
+/*
+ * @Author: richard 
+ * @Date: 2022-11-17 14:56:56 
+ * @Last Modified by:   richard 
+ * @Last Modified time: 2022-11-17 14:56:56 
+ */
 import { Disposable, workspace, ConfigurationChangeEvent, ConfigurationTarget, commands } from "vscode";
 import { Problem, ProblemState } from './Problem'
 import { ProblemContent } from './ProblemContent';
@@ -70,6 +73,11 @@ class AcwingManager implements Disposable {
     this.explorerProblemsMap.clear();
     this.problemContentMap.clear();
     this.configurationChangeListener.dispose();
+  }
+
+  public clearCache(): void {
+    this.explorerProblemsMap.clear();
+    this.problemContentMap.clear();
   }
 
   // 列出acwing 页面的问题 https://www.acwing.com/problem/{page}/

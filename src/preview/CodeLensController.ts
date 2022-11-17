@@ -1,3 +1,10 @@
+/*
+ * @Author: richard 
+ * @Date: 2022-11-17 14:56:26 
+ * @Last Modified by:   richard 
+ * @Last Modified time: 2022-11-17 14:56:26 
+ */
+
 import { ConfigurationChangeEvent, Disposable, languages, workspace } from "vscode";
 import { customCodeLensProvider, CustomCodeLensProvider } from "./CustomCodeLensProvider";
 

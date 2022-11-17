@@ -1,9 +1,15 @@
+/*
+ * @Author: richard 
+ * @Date: 2022-11-17 14:55:50 
+ * @Last Modified by:   richard 
+ * @Last Modified time: 2022-11-17 14:55:50 
+ */
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as _ from "lodash";
 import * as path from 'path';
-import { acwingManager } from "./repo/acwingManager";
-import { Problem, ProblemState } from './repo/Problem'
+import { acwingManager } from "../repo/AcwingManager";
+import { Problem, ProblemState } from '../repo/Problem'
 
 export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 
@@ -16,6 +22,13 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 
 	constructor() {
 
+	}
+
+	public init (context: vscode.ExtensionContext) {
+		let acWingTreeView = vscode.window.createTreeView("acWing", {treeDataProvider: this});
+		acWingTreeView.title = "1";
+		this.setTreeView(acWingTreeView);
+		context.subscriptions.push(acWingTreeView);
 	}
 
 	public async refresh(): Promise<void> {
@@ -109,11 +122,11 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 
 		let iconPath: string = "";
    		if (element.state == ProblemState.ACCEPTED) {
-			iconPath =  path.join(__filename, '..', '..', 'resources', 'check.png');
+			iconPath =  path.join(__filename, '..', '..', '..', 'resources', 'check.png');
 		} else if (element.state == ProblemState.TRY) {
-			iconPath = path.join(__filename, '..', '..', 'resources', 'x.png');
+			iconPath = path.join(__filename, '..', '..', '..', 'resources', 'x.png');
 		} else {
-			iconPath =  path.join(__filename, '..', '..', 'resources', 'blank.png');
+			iconPath =  path.join(__filename, '..', '..', '..', 'resources', 'blank.png');
 		}
 		return {
 			label: `${element.index}. ${element.name}`,

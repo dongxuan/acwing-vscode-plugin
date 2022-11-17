@@ -1,10 +1,17 @@
+/*
+ * @Author: richard 
+ * @Date: 2022-11-17 14:56:48 
+ * @Last Modified by:   richard 
+ * @Last Modified time: 2022-11-17 14:56:48 
+ */
+
 import * as vscode from 'vscode';
 import { commands, ConfigurationChangeEvent, Disposable, ViewColumn, WebviewPanel, window, workspace, Uri } from "vscode";
 import * as path from "path";
 import * as fse from "fs-extra";
-import { acwingManager } from "./repo/acwingManager";
-import { Problem } from "./repo/Problem";
-import { ProblemContent } from "./repo/ProblemContent";
+import { acwingManager } from "../repo/AcwingManager";
+import { Problem } from "../repo/Problem";
+import { ProblemContent } from "../repo/ProblemContent";
 
 
 class ProblemPreviewView implements Disposable {
@@ -95,6 +102,10 @@ class ProblemPreviewView implements Disposable {
         this.problemContent = await acwingManager.getProblemContentById(this.problemID);
         if (!this.problemContent) {
             return this.getWebviewFailedContent();
+        }
+
+        if (this.panel && this.panel.title == 'AcWing') {
+            this.panel.title = this.problemContent.name;
         }
 
         const html = this.getHtmlTheme();

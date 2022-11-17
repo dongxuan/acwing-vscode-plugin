@@ -1,9 +1,12 @@
-// Copyright (c) jdneo. All rights reserved.
-// Licensed under the MIT license.
+/*
+ * @Author: richard 
+ * @Date: 2022-11-17 14:57:06 
+ * @Last Modified by:   richard 
+ * @Last Modified time: 2022-11-17 14:57:06 
+ */
 
 import { StringDecoder } from "string_decoder";
 import { Command, Uri } from "vscode";
-
 
 export class ProblemContent {
     public id: string;

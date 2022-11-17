@@ -1,3 +1,9 @@
+/*
+ * @Author: richard 
+ * @Date: 2022-11-17 14:55:29 
+ * @Last Modified by:   richard 
+ * @Last Modified time: 2022-11-17 14:55:29 
+ */
 import * as fs from "fs";
 import * as vscode from 'vscode';
 import * as WebSocket from 'ws';
@@ -6,10 +12,10 @@ import * as fse from "fs-extra";
 import * as chalk from 'chalk';
 
 import { ConfigurationChangeEvent, Disposable, languages, workspace, FileSystemProvider, ExtensionContext } from "vscode";
-import { customCodeLensProvider, CustomCodeLensProvider } from "./CustomCodeLensProvider";
-import { acwingManager } from "./repo/acwingManager";
-import { problemPreviewView } from './problemPreviewView';
-import { ProblemTreeProvider } from './problemTreeView';
+import { customCodeLensProvider, CustomCodeLensProvider } from "./preview/CustomCodeLensProvider";
+import { acwingManager } from "./repo/AcwingManager";
+import { problemPreviewView } from './preview/ProblemPreviewView';
+import { ProblemTreeProvider } from './explorer/ProblemTreeView';
 import { Problem } from "./repo/Problem";
 import { ProblemContent } from "./repo/ProblemContent";
 
@@ -54,14 +60,28 @@ export class AcWingController implements Disposable {
         acwingManager.setCookie(inputCookie);
     }
 
+    public clearCache() {
+        console.log('clearCache()');
+        acwingManager.clearCache();
+    }
+
     // 预览题目
-    public previewProblem (problemID: string, problem: Problem) {
+    public async previewProblem (problemID: string, problem: Problem) {
         console.log('AcWingController::previewProblem() ' + problemID);
+        if (!problemID) {
+            problemID = await this.inputProblemID();
+        }
+        if (!problemID) return;
         problemPreviewView.show(problemID, problem, false);
     }
 
     // 显示编辑器
     public async editProblem (problemID: string) {
+        if (!problemID) {
+            problemID = await this.inputProblemID();
+        }
+        if (!problemID) return;
+
         let problemContent = await acwingManager.getProblemContentById(problemID);
 
         if (!problemContent) {
@@ -86,6 +106,15 @@ export class AcWingController implements Disposable {
         // TODO 显示几行
         vscode.window.showTextDocument(vscode.Uri.file(finalPath), 
             { preview: false, viewColumn: vscode.ViewColumn.One });
+    }
+
+    public async inputProblemID (): Promise<string> {
+        const pageOption: vscode.InputBoxOptions = {
+			title: "请输入题号：",
+			prompt: "/problem/content/XXX/,XXX是题目，而非标题（有时候不一致）",
+		};
+        let str = await vscode.window.showInputBox(pageOption) || "";
+        return str;
     }
 
     // 显示题解
