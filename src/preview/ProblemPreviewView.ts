@@ -2,7 +2,7 @@
  * @Author: richard 
  * @Date: 2022-11-17 14:56:48 
  * @Last Modified by: richard
- * @Last Modified time: 2022-11-17 15:56:23
+ * @Last Modified time: 2022-11-17 16:24:45
  */
 
 import * as vscode from 'vscode';
@@ -327,7 +327,7 @@ class ProblemPreviewView implements Disposable {
 
     // 原题链接
     private getSourceLink(): string {
-        return `https://www.acwing.com/problem/${this.problemID}`;
+        return `https://www.acwing.com/problem/content/${this.problemID}`;
     }
 
     // 提交记录的链接
@@ -342,7 +342,7 @@ class ProblemPreviewView implements Disposable {
 
     // 题解地址
     private getSolutionLink(): string {
-        return `https://www.acwing.com/problem/content/discussion/index/${this.problemID}/1/`;
+        return `https://www.acwing.com/problem/content/solution/index/${this.problemID}/1/`;
     }
 
     // 视频地址

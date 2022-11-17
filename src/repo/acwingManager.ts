@@ -1,8 +1,8 @@
 /*
  * @Author: richard 
  * @Date: 2022-11-17 14:56:56 
- * @Last Modified by:   richard 
- * @Last Modified time: 2022-11-17 14:56:56 
+ * @Last Modified by: richard
+ * @Last Modified time: 2022-11-17 16:19:51
  */
 import { Disposable, workspace, ConfigurationChangeEvent, ConfigurationTarget, commands } from "vscode";
 import { Problem, ProblemState } from './Problem'
@@ -205,6 +205,10 @@ class AcwingManager implements Disposable {
     const $ = cheerio.load(html);
     item.name = $('.problem-content-title').text().replace(/\n/g, '').trim();
     item.contentHtml = $('.main-martor-content').html() || "";
+    // 解决图片无法显示的问题
+    item.contentHtml = item.contentHtml.replace(new RegExp('src="\/media\/article\/', 'g'), 
+      'src="https://www.acwing.com/media/article/');
+    
     $('.table-responsive tbody tr').each(function (index, value) {
       let vd: string[] = [];
       switch (index) {

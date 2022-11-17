@@ -2,7 +2,7 @@
  * @Author: richard 
  * @Date: 2022-11-17 14:55:50 
  * @Last Modified by: richard
- * @Last Modified time: 2022-11-17 15:49:27
+ * @Last Modified time: 2022-11-17 16:45:59
  */
 import * as vscode from 'vscode';
 import * as fs from 'fs';
@@ -38,17 +38,17 @@ export class ProblemTreeProvider implements vscode.TreeDataProvider<Problem> {
 		// 强制拉去一下数据，刷新缓存
 		let newProblemList = await acwingManager.getProblemsByPage(this.currentPage, true);
 		// 检查一下，是否需要刷新UI, 其实主要是状态
-		// if (newProblemList && newProblemList.length == this.problemList.length) {
-		// 	for (let i = 0; i < newProblemList.length; i++) {
-		// 		if (!_.isEqual(newProblemList[i], this.problemList[i])) {
-		// 			// 有一个不一样，就刷新
-		// 			break;
-		// 		}
-		// 	}
-		// 	// 全都一致，不刷新
-		// 	console.log('ProblemTreeProvider refresh() skip.');
-		// 	return;
-		// }
+		if (newProblemList && newProblemList.length == this.problemList.length) {
+			for (let i = 0; i < newProblemList.length; i++) {
+				if (!_.isEqual(newProblemList[i], this.problemList[i])) {
+					// 有一个不一样，就刷新
+					break;
+				}
+			}
+			// 全都一致，不刷新
+			console.log('ProblemTreeProvider refresh() skip.');
+			return;
+		}
 		console.log('ProblemTreeProvider refresh() fire');
 		this._onDidChangeTreeData.fire();
 	}

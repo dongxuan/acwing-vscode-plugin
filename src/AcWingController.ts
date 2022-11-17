@@ -2,7 +2,7 @@
  * @Author: richard 
  * @Date: 2022-11-17 14:55:29 
  * @Last Modified by: richard
- * @Last Modified time: 2022-11-17 16:08:14
+ * @Last Modified time: 2022-11-17 16:48:47
  */
 import * as fs from "fs";
 import * as vscode from 'vscode';
@@ -150,7 +150,7 @@ export class AcWingController implements Disposable {
     // 显示题解
     public showSolution (problemID: string) {
         console.log('AcWingController::showSolution() ' + problemID);
-        const url = `https://www.acwing.com/problem/content/discussion/index/${problemID}/1/`;
+        const url = `https://www.acwing.com/problem/content/solution/${problemID}/1/`;
         vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
 
@@ -225,6 +225,7 @@ export class AcWingController implements Disposable {
             return;
         }
 
+        // 提交
         let problemContent = await acwingManager.getProblemContentById(problemID);
         if (!problemContent) {
             console.log(`runSolution() failed get problem content ${problemID}`);
@@ -232,6 +233,11 @@ export class AcWingController implements Disposable {
             return;
         }
 
+        // 保存文档
+        if (vscode.window.activeTextEditor?.document.isDirty) {
+            await vscode.window.activeTextEditor?.document.save();
+        }
+        
         const codeData = await fs.readFileSync(uri.fsPath, "utf8");
         const data = {
             'activity': "problem_run_code",
@@ -254,6 +260,11 @@ export class AcWingController implements Disposable {
             console.log(`submitCode() failed lang is invaild ${lang}`);
             vscode.window.showErrorMessage(`无效语言类型"${lang}"`);
             return;
+        }
+
+        // 保存文档
+        if (vscode.window.activeTextEditor?.document.isDirty) {
+            await vscode.window.activeTextEditor?.document.save();
         }
 
         const codeData = await fs.readFileSync(uri.fsPath, "utf8");
@@ -453,6 +464,8 @@ export class AcWingController implements Disposable {
             if (status === 'ACCEPTED') {
                 this.outputChannel.appendLine(`代码提交状态：${statusName}\n`);
                 // vscode.window.showInformationMessage(`ACCEPTED`);
+                // reload tree
+                vscode.commands.executeCommand('acWing.refreshEntry');
                 return;
             }
 
@@ -463,11 +476,18 @@ export class AcWingController implements Disposable {
             this.outputChannel.appendLine("错误数据如下所示");
             this.outputChannel.appendLine(testcase_input);
 
-            this.outputChannel.appendLine("输出");
-            this.outputChannel.appendLine(testcase_user_output);
+            this.outputChannel.appendLine("您的答案");
+            if (compilationResult) {
+                this.outputChannel.appendLine(compilationResult);
+            } else {
+                this.outputChannel.appendLine(testcase_user_output);
+            }
 
             this.outputChannel.appendLine("标准答案");
             this.outputChannel.append(testcase_output);
+
+            // reload tree
+            vscode.commands.executeCommand('acWing.refreshEntry');
 
             // if($run_code_stdin.attr("preventEnter") === undefined){
             //     text = text.replace(/[\n]/g, "<br>&#8203;");
