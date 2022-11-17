@@ -1,71 +1,58 @@
-# acwing README
+# AcWing README
+一款可以在vscode中开心的刷[acwing](https://www.acwing.com/)题目的插件。
+大量代码~~参考~~（CTRL+V）自[vscode-leetcode插件](https://github.com/LeetCode-OpenSource/vscode-leetcode)，感恩。
 
-This is the README for your extension "acwing". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+* 支持AcWing题目分页预览
+* 支持测试，提交代码
 
-For example if there is an image subfolder under your extension project workspace:
 
-\!\[feature X\]\(images/feature-x.png\)
+下个版本计划（~~如果有的话~~）：
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+* 添加搜索功能
+* 按照标签，难度展示题目(?)
+* 测试提交数据优化，新开网页显示结果，不再使用output（颜色不支持呀）
 
-## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Source code & Bug report
+
+https://github.com/dongxuan/acwing-vscode-plugin
+
+尽量修复，来不及修复的话，老哥们就fork一个自己改吧。
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+### 相关配置
 
-For example:
+* `acWing.cookies`: Acwing cookie配置，有cookie才可以进行代码测试提交
+> 注意：由于AcWing一登录会踢掉另外一端，所以只好用配置cookie的方式登录。请打开acwing网站并登录，按F12调出控制台，并按下图截取cookie进行配置（不要使用js的document.cookie获取，那个获取的cookie不全）。
 
-This extension contributes the following settings:
+* `acWing.defaultLanguage`: 默认编程语言
+* `acWing.workspaceFolder`: 代码存储目录
+* `acWing.colorizeProblems`: 是否显示难度的颜色
+* `acWing.clickProblemItem`: 点击题目时的动作，可以配置为预览题目，打开编辑器，或者同时显示题目和编辑器
+* `acWing.editor.shortcuts`: 配置编辑器中的快捷方式
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+### 快捷操作
 
-## Known Issues
+* `acWing.setCookie`: 设置cookie
+* `acWing.clear`: 清理缓存
+* `acWing.gotoPage`: 跳转到题目页面
+* `acWing.previewProblem`: 预览对应ID的题目
+* `acWing.editProblem`: 编辑对应ID的题目
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+> 注意：题目ID是类似于 https://www.acwing.com/problem/content/39/
+中的39，而非题目标题中的数字，AcWing中一些题目链接和标题的数字不匹配。
+
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+初始版本，支持基础功能
 
 ---
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
 
 **Enjoy!**
